@@ -3,7 +3,9 @@
 Juego web de realidad aumentada basada en marcadores, hecho con **AR.js 3.4.7** + **A-Frame 1.6.0**.
 Funciona en el navegador del celular o de la notebook, sin instalar nada.
 
-**Jugar:** _(URL de despliegue)_ · **Marcadores para imprimir:** `marcadores.html`
+**▶️ Jugar:** https://ibonarambarri.github.io/tesoro-sacre-coeur-ar/
+
+**🖨️ Marcadores para imprimir:** https://ibonarambarri.github.io/tesoro-sacre-coeur-ar/marcadores.html
 
 ---
 
