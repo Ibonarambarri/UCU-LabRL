@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marcadores · El tesoro del Sacré Coeur</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🖨️</text></svg>">
+<style>
+  :root{--oro:#b8862a;--tinta:#161a24;--papel:#faf6ee}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--papel);color:var(--tinta);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
+    line-height:1.6}
+  header{max-width:760px;margin:0 auto;padding:36px 20px 8px}
+  h1{font-family:"Iowan Old Style",Palatino,Georgia,serif;font-size:30px;margin:0 0 6px;letter-spacing:.01em}
+  .sub{color:#5d6373;margin:0 0 20px}
+  .aviso{background:#fff;border:1px solid #e3dccc;border-left:4px solid var(--oro);
+    border-radius:10px;padding:14px 16px;margin:0 0 18px}
+  .aviso ul{margin:8px 0 0;padding-left:20px}
+  .aviso li{margin:4px 0}
+  .acciones{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+  .btn{border:0;border-radius:10px;padding:11px 18px;font-size:15px;font-weight:600;cursor:pointer;
+    background:var(--tinta);color:var(--papel);text-decoration:none;display:inline-block}
+  .btn.sec{background:#fff;color:var(--tinta);border:1px solid #d8d1c1}
+  .btn:active{transform:translateY(1px)}
+
+  main{max-width:760px;margin:0 auto;padding:16px 20px 60px}
+  .hoja{background:#fff;border:1px solid #e6dfd0;border-radius:14px;padding:26px;margin:0 0 22px;
+    display:flex;gap:26px;align-items:center;flex-wrap:wrap}
+  .hoja img{width:210px;height:210px;display:block;background:#fff;flex:none}
+  .datos{flex:1;min-width:210px}
+  .etiqueta{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--oro);font-weight:700}
+  .datos h2{font-family:"Iowan Old Style",Palatino,Georgia,serif;font-size:22px;margin:4px 0 6px}
+  .datos p{margin:0;color:#5d6373;font-size:14.5px}
+  .datos code{background:#f2ede2;border-radius:5px;padding:1px 6px;font-size:12.5px}
+
+  footer{max-width:760px;margin:0 auto;padding:0 20px 60px;color:#7a8090;font-size:13.5px}
+  a{color:#8a6316}
+
+  @media print{
+    @page{size:A4;margin:16mm}
+    body{background:#fff}
+    header,footer,.acciones,.aviso,.sub{display:none}
+    main{padding:0;max-width:none}
+    .hoja{border:0;padding:0;margin:0;page-break-after:always;break-after:page;
+      display:flex;flex-direction:column;justify-content:center;align-items:center;height:245mm;gap:10mm}
+    .hoja img{width:100mm;height:100mm}
+    .datos{text-align:center;flex:none}
+    .datos p{display:none}
+    .datos h2{font-size:16pt}
+    .hoja:last-child{page-break-after:auto;break-after:auto}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Marcadores para imprimir</h1>
+  <p class="sub">El tesoro del Sacré Coeur · Realidad Aumentada con AR.js</p>
+
+  <div class="aviso">
+    <b>Cómo prepararlos</b>
+    <ul>
+      <li>Imprimí en <b>papel blanco mate</b> (el brillo genera reflejos y arruina la detección).</li>
+      <li>Dejá el <b>margen blanco alrededor</b> del cuadro negro: sin ese margen el marcador no se detecta.</li>
+      <li>Tamaño recomendado: <b>10 × 10 cm</b> o más. Cuanto más grande, más lejos se detecta.</li>
+      <li>Pegalos <b>planos</b> sobre una superficie rígida, sin dobleces ni arrugas.</li>
+      <li>¿Sin impresora? Mostralos <b>a pantalla completa en otro monitor</b> — también funcionan.</li>
+    </ul>
+  </div>
+
+  <div class="acciones">
+    <button class="btn" onclick="window.print()">🖨️ Imprimir los 5 marcadores</button>
+    <a class="btn sec" href="index.html">← Volver al juego</a>
+  </div>
+</header>
+
+<main>
+  <section class="hoja">
+    <img src="markers/inicio.svg" alt="Marcador Diario">
+    <div class="datos">
+      <div class="etiqueta">Marcador 1</div>
+      <h2>📜 El diario del vigía</h2>
+      <p>Punto de partida: presenta la historia y el desafío. <code>markers/inicio.patt</code></p>
+    </div>
+  </section>
+
+  <section class="hoja">
+    <img src="markers/pista1.svg" alt="Marcador Llave">
+    <div class="datos">
+      <div class="etiqueta">Marcador 2</div>
+      <h2>🗝️ La llave de bronce</h2>
+      <p>Primera pista del mensaje. <code>markers/pista1.patt</code></p>
+    </div>
+  </section>
+
+  <section class="hoja">
+    <img src="markers/pista2.svg" alt="Marcador Brújula">
+    <div class="datos">
+      <div class="etiqueta">Marcador 3</div>
+      <h2>🧭 La brújula inquieta</h2>
+      <p>Segunda pista del mensaje. <code>markers/pista2.patt</code></p>
+    </div>
+  </section>
+
+  <section class="hoja">
+    <img src="markers/pista3.svg" alt="Marcador Cristal">
+    <div class="datos">
+      <div class="etiqueta">Marcador 4</div>
+      <h2>💎 El cristal verde</h2>
+      <p>Tercera pista del mensaje. <code>markers/pista3.patt</code></p>
+    </div>
+  </section>
+
+  <section class="hoja">
+    <img src="markers/tesoro.svg" alt="Marcador Cofre">
+    <div class="datos">
+      <div class="etiqueta">Marcador 5</div>
+      <h2>🏆 El cofre del vigía</h2>
+      <p>Solo se abre con las 4 señales anteriores. <code>markers/tesoro.patt</code></p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  Patrones propios generados con <code>tools/gen_markers.py</code> (formato ARToolKit, 16×16 en 4 rotaciones).
+  Cada marcador se eligió por búsqueda para minimizar la confusión entre patrones.
+</footer>
+
+</body>
+</html>

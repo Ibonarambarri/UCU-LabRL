@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0b0f1a">
+<title>El Tesoro del Sacré Coeur — Búsqueda AR</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗝️</text></svg>">
+<script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.7/aframe/build/aframe-ar.js"></script>
+<style>
+  :root{
+    --oro:#f0c069; --oro-claro:#ffe4a8; --tinta:#0b0f1a; --tinta-2:#141c2e;
+    --pergamino:#f6ead2; --verde:#5fd6a6; --rojo:#ff7a6b;
+    --sombra:0 18px 50px rgba(0,0,0,.55);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overflow:hidden;background:var(--tinta);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;color:var(--pergamino)}
+  .ui{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif}
+
+  /* --- capa AR --- */
+  a-scene{position:fixed;inset:0}
+  .a-enter-vr,.a-enter-ar,.a-orientation-modal{display:none!important}
+  video,canvas.a-canvas{object-fit:cover}
+
+  /* --- HUD --- */
+  #hud{position:fixed;inset:0;pointer-events:none;z-index:10;
+    display:flex;flex-direction:column;justify-content:space-between;
+    padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom))}
+  #hud>*{pointer-events:auto}
+
+  .barra{display:flex;align-items:center;gap:10px;
+    background:linear-gradient(180deg,rgba(11,15,26,.92),rgba(11,15,26,.55));
+    border:1px solid rgba(240,192,105,.25);border-radius:14px;padding:8px 12px;
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  .barra .titulo{font-size:14px;letter-spacing:.06em;color:var(--oro);flex:1;
+    text-transform:uppercase;font-weight:600;line-height:1.2}
+  .cronometro{font-variant-numeric:tabular-nums;font-size:15px;font-weight:700;color:var(--oro-claro);
+    background:rgba(240,192,105,.12);border-radius:8px;padding:4px 8px}
+  .icono-btn{width:34px;height:34px;border-radius:9px;border:1px solid rgba(240,192,105,.3);
+    background:rgba(240,192,105,.08);color:var(--oro);font-size:15px;line-height:1;cursor:pointer}
+  .icono-btn:active{transform:scale(.94)}
+
+  /* --- fichas de progreso --- */
+  #progreso{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+  .ficha{display:flex;flex-direction:column;align-items:center;gap:3px;width:62px;
+    background:rgba(11,15,26,.82);border:1px solid rgba(240,192,105,.22);border-radius:12px;
+    padding:7px 4px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    transition:transform .25s,border-color .25s,background .25s}
+  .ficha .glifo{font-size:19px;filter:grayscale(1);opacity:.4;transition:.25s}
+  .ficha .nombre{font-size:9px;letter-spacing:.05em;text-transform:uppercase;opacity:.55;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .ficha.hallado{border-color:var(--oro);background:rgba(240,192,105,.16)}
+  .ficha.hallado .glifo{filter:none;opacity:1}
+  .ficha.hallado .nombre{opacity:1;color:var(--oro-claro)}
+  .ficha.nueva{animation:pop .6s cubic-bezier(.2,1.4,.4,1)}
+  @keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.22)}100%{transform:scale(1)}}
+  .ficha.bloqueada .glifo{filter:grayscale(1) brightness(.6)}
+
+  /* --- guía de escaneo --- */
+  #guia{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:5;
+    width:min(62vw,260px);aspect-ratio:1;border-radius:22px;pointer-events:none;
+    border:2px dashed rgba(240,192,105,.35);opacity:.9;transition:opacity .3s}
+  #guia.oculto{opacity:0}
+  #guia .pista-txt{position:absolute;left:0;right:0;bottom:-38px;text-align:center;font-size:12px;
+    color:rgba(246,234,210,.75);font-family:-apple-system,BlinkMacSystemFont,sans-serif}
+
+  /* --- paneles --- */
+  #velo{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;
+    padding:18px;background:rgba(6,9,16,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+  #velo.visible{display:flex;animation:fade .3s ease}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .carta{width:min(440px,100%);max-height:88vh;overflow:auto;border-radius:20px;padding:22px;
+    background:radial-gradient(120% 120% at 0% 0%,#1d2740 0%,var(--tinta-2) 55%,#0d1424 100%);
+    border:1px solid rgba(240,192,105,.35);box-shadow:var(--sombra);
+    animation:sube .38s cubic-bezier(.2,.9,.3,1)}
+  @keyframes sube{from{transform:translateY(22px) scale(.97);opacity:0}to{transform:none;opacity:1}}
+  .carta .sello{font-size:38px;text-align:center;line-height:1}
+  .carta h1{margin:10px 0 4px;font-size:24px;text-align:center;color:var(--oro);letter-spacing:.02em}
+  .carta h2{margin:8px 0 2px;font-size:12px;text-align:center;letter-spacing:.22em;
+    text-transform:uppercase;color:rgba(240,192,105,.7);font-family:-apple-system,sans-serif}
+  .carta p{margin:12px 0;font-size:16px;line-height:1.62;color:rgba(246,234,210,.92)}
+  .carta .versos{border-left:3px solid var(--oro);padding:4px 0 4px 14px;font-style:italic;
+    color:var(--oro-claro);white-space:pre-line}
+  .carta ol{margin:12px 0;padding-left:20px;font-size:14.5px;line-height:1.7;
+    color:rgba(246,234,210,.85);font-family:-apple-system,BlinkMacSystemFont,sans-serif}
+  .boton{display:block;width:100%;margin-top:16px;padding:14px;border:0;border-radius:13px;
+    font-size:16px;font-weight:700;cursor:pointer;letter-spacing:.02em;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:linear-gradient(180deg,var(--oro-claro),var(--oro));color:#2a1c05;
+    box-shadow:0 8px 22px rgba(240,192,105,.28)}
+  .boton:active{transform:translateY(1px)}
+  .boton.fantasma{background:transparent;color:rgba(246,234,210,.7);
+    border:1px solid rgba(246,234,210,.25);box-shadow:none;font-weight:600;margin-top:8px}
+  .nota{margin-top:14px;font-size:12px;line-height:1.55;text-align:center;
+    color:rgba(246,234,210,.55);font-family:-apple-system,sans-serif}
+  .nota a{color:var(--oro)}
+
+  /* --- aviso emergente --- */
+  #aviso{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 74px);transform:translate(-50%,-14px);
+    z-index:30;opacity:0;pointer-events:none;transition:.32s;
+    background:rgba(11,15,26,.95);border:1px solid var(--oro);border-radius:12px;
+    padding:9px 15px;font-size:14px;color:var(--oro-claro);box-shadow:var(--sombra);
+    font-family:-apple-system,BlinkMacSystemFont,sans-serif;max-width:86vw;text-align:center}
+  #aviso.visible{opacity:1;transform:translate(-50%,0)}
+
+  #confeti{position:fixed;inset:0;z-index:25;pointer-events:none;display:none}
+  .oculto{display:none!important}
+</style>
+</head>
+<body>
+
+<a-scene
+  vr-mode-ui="enabled: false"
+  device-orientation-permission-ui="enabled: false"
+  loading-screen="enabled: false"
+  renderer="antialias: true; alpha: true; colorManagement: true; physicallyCorrectLights: true"
+  embedded
+  arjs="sourceType: webcam; detectionMode: mono; patternRatio: 0.5; maxDetectionRate: 60; canvasWidth: 640; canvasHeight: 480; debugUIEnabled: false;">
+
+  <a-entity light="type: ambient; intensity: 0.85"></a-entity>
+  <a-entity light="type: directional; intensity: 0.65" position="1 3 2"></a-entity>
+
+  <!-- ══ MARCADOR 1 · EL DIARIO ══ -->
+  <a-marker id="mk-inicio" type="pattern" url="markers/inicio.patt"
+            smooth="true" smoothCount="10" smoothTolerance="0.01" smoothThreshold="5">
+    <a-entity position="0 0 0">
+      <a-plane position="0 0.01 0" rotation="-90 0 0" width="1.35" height="0.95"
+               color="#f3e3c3" opacity="0.96"
+               animation="property: rotation; from: -90 0 -6; to: -90 0 6; dir: alternate; dur: 3400; loop: true; easing: easeInOutSine"></a-plane>
+      <a-text value="EL DIARIO DEL VIGIA" align="center" color="#3a2a10" width="2.1"
+              position="0 0.02 -0.22" rotation="-90 0 0"></a-text>
+      <a-text value="Tres senales guardan\nel camino al cofre" align="center" color="#6b5427" width="1.55"
+              position="0 0.02 0.06" rotation="-90 0 0"></a-text>
+      <a-entity position="0 0.55 0"
+                animation="property: rotation; to: 0 360 0; loop: true; dur: 7000; easing: linear">
+        <a-torus-knot radius="0.2" radius-tubular="0.035" color="#f0c069" metalness="0.6" roughness="0.3"></a-torus-knot>
+      </a-entity>
+    </a-entity>
+  </a-marker>
+
+  <!-- ══ MARCADOR 2 · LA LLAVE ══ -->
+  <a-marker id="mk-pista1" type="pattern" url="markers/pista1.patt"
+            smooth="true" smoothCount="10" smoothTolerance="0.01" smoothThreshold="5">
+    <a-entity position="0 0.4 0" rotation="-25 0 0"
+              animation="property: position; to: 0 0.58 0; dir: alternate; dur: 1900; loop: true; easing: easeInOutSine">
+      <a-entity animation="property: rotation; to: -25 360 0; loop: true; dur: 8000; easing: linear">
+        <a-torus radius="0.19" radius-tubular="0.05" color="#f0c069" metalness="0.75" roughness="0.25"
+                 rotation="0 0 0" position="0 0.28 0"></a-torus>
+        <a-cylinder radius="0.035" height="0.62" color="#f0c069" metalness="0.75" roughness="0.25"
+                    position="0 -0.14 0"></a-cylinder>
+        <a-box width="0.2" height="0.05" depth="0.05" color="#f0c069" metalness="0.75" roughness="0.25"
+               position="0.08 -0.32 0"></a-box>
+        <a-box width="0.14" height="0.05" depth="0.05" color="#f0c069" metalness="0.75" roughness="0.25"
+               position="0.05 -0.44 0"></a-box>
+      </a-entity>
+    </a-entity>
+    <a-text value="PISTA I  ·  LA LLAVE" align="center" color="#f0c069" width="1.9"
+            position="0 0.02 0.55" rotation="-90 0 0"></a-text>
+  </a-marker>
+
+  <!-- ══ MARCADOR 3 · LA BRUJULA ══ -->
+  <a-marker id="mk-pista2" type="pattern" url="markers/pista2.patt"
+            smooth="true" smoothCount="10" smoothTolerance="0.01" smoothThreshold="5">
+    <a-entity position="0 0.3 0" rotation="-90 0 0">
+      <a-cylinder radius="0.42" height="0.07" color="#243049" metalness="0.4" roughness="0.5"></a-cylinder>
+      <a-torus radius="0.42" radius-tubular="0.04" color="#f0c069" metalness="0.8" roughness="0.2"></a-torus>
+      <a-entity animation="property: rotation; to: 0 0 -720; loop: true; dur: 9000; easing: easeInOutQuad">
+        <a-cone radius-bottom="0.09" radius-top="0" height="0.34" color="#ff7a6b"
+                position="0 0.17 0.06" rotation="0 0 0"></a-cone>
+        <a-cone radius-bottom="0.09" radius-top="0" height="0.34" color="#e8e2d4"
+                position="0 -0.17 0.06" rotation="180 0 0"></a-cone>
+      </a-entity>
+    </a-entity>
+    <a-text value="PISTA II  ·  LA BRUJULA" align="center" color="#f0c069" width="1.9"
+            position="0 0.02 0.62" rotation="-90 0 0"></a-text>
+  </a-marker>
+
+  <!-- ══ MARCADOR 4 · EL CRISTAL ══ -->
+  <a-marker id="mk-pista3" type="pattern" url="markers/pista3.patt"
+            smooth="true" smoothCount="10" smoothTolerance="0.01" smoothThreshold="5">
+    <a-entity position="0 0.45 0"
+              animation="property: rotation; to: 0 360 0; loop: true; dur: 6000; easing: linear">
+      <a-octahedron radius="0.36" color="#5fd6a6" opacity="0.8" transparent="true"
+                    metalness="0.3" roughness="0.1"></a-octahedron>
+      <a-octahedron radius="0.5" color="#5fd6a6" opacity="0.18" transparent="true"
+                    animation="property: scale; to: 1.18 1.18 1.18; dir: alternate; dur: 1600; loop: true; easing: easeInOutSine"></a-octahedron>
+    </a-entity>
+    <a-text value="PISTA III  ·  EL CRISTAL" align="center" color="#5fd6a6" width="1.9"
+            position="0 0.02 0.62" rotation="-90 0 0"></a-text>
+  </a-marker>
+
+  <!-- ══ MARCADOR 5 · EL COFRE ══ -->
+  <a-marker id="mk-tesoro" type="pattern" url="markers/tesoro.patt"
+            smooth="true" smoothCount="10" smoothTolerance="0.01" smoothThreshold="5">
+    <!-- cofre cerrado -->
+    <a-entity id="cofre-cerrado" position="0 0.22 0">
+      <a-box width="0.9" height="0.44" depth="0.6" color="#3b2a16" metalness="0.2" roughness="0.8"></a-box>
+      <a-box width="0.94" height="0.06" depth="0.64" color="#7a6a4a" position="0 0.24 0"></a-box>
+      <a-box width="0.14" height="0.16" depth="0.06" color="#8d8d8d" position="0 0.06 0.32"></a-box>
+      <a-text value="CERRADO" align="center" color="#ff7a6b" width="1.6"
+              position="0 0.55 0" rotation="0 0 0"></a-text>
+    </a-entity>
+    <!-- cofre abierto -->
+    <a-entity id="cofre-abierto" visible="false" position="0 0.22 0">
+      <a-box width="0.9" height="0.44" depth="0.6" color="#4a3419" metalness="0.2" roughness="0.75"></a-box>
+      <a-box width="0.94" height="0.08" depth="0.64" color="#f0c069" metalness="0.8" roughness="0.2"
+             position="0 0.42 -0.3" rotation="-105 0 0"></a-box>
+      <a-sphere radius="0.16" color="#ffe4a8" metalness="0.9" roughness="0.15" position="0 0.3 0"
+                animation="property: position; to: 0 0.46 0; dir: alternate; dur: 1500; loop: true; easing: easeInOutSine"></a-sphere>
+      <a-sphere radius="0.09" color="#f0c069" metalness="0.9" roughness="0.15" position="-0.26 0.26 0.1"></a-sphere>
+      <a-sphere radius="0.07" color="#5fd6a6" metalness="0.6" roughness="0.1" position="0.25 0.25 -0.08"></a-sphere>
+      <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 5000; easing: linear">
+        <a-torus radius="0.55" radius-tubular="0.015" color="#ffe4a8" rotation="90 0 0" position="0 0.35 0"></a-torus>
+      </a-entity>
+      <a-text value="TESORO HALLADO" align="center" color="#ffe4a8" width="2"
+              position="0 0.85 0"></a-text>
+    </a-entity>
+  </a-marker>
+
+  <a-entity camera></a-entity>
+</a-scene>
+
+<canvas id="confeti"></canvas>
+
+<div id="guia"><div class="pista-txt">Apuntá la cámara a un marcador</div></div>
+
+<div id="hud">
+  <div class="barra">
+    <div class="titulo">El tesoro del<br>Sacré Coeur</div>
+    <div class="cronometro" id="cronometro">00:00</div>
+    <button class="icono-btn ui" id="btn-ayuda" title="Cómo jugar">?</button>
+    <button class="icono-btn ui" id="btn-reset" title="Reiniciar partida">↺</button>
+  </div>
+  <div id="progreso"></div>
+</div>
+
+<div id="aviso"></div>
+
+<div id="velo"><div class="carta" id="carta"></div></div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ══════════ Datos del juego ══════════ */
+  var MARCADORES = [
+    {
+      id: "inicio", glifo: "📜", nombre: "Diario", orden: 1,
+      titulo: "El diario del vigía",
+      encabezado: "Marcador I de V",
+      texto: "Sacré Coeur, 1932. El vigía nocturno escondió algo antes de marcharse y dejó tres señales repartidas por el edificio.",
+      versos: "«Quien reúna la llave, el rumbo y la luz,\nabrirá el cofre que nadie halló.»",
+      nota: "Buscá los tres marcadores de pista. Después aparecerá el cofre."
+    },
+    {
+      id: "pista1", glifo: "🗝️", nombre: "Llave", orden: 2,
+      titulo: "La llave de bronce",
+      encabezado: "Pista I de III",
+      texto: "La primera señal es una llave que gira sobre sí misma, sin puerta que le corresponda.",
+      versos: "«Donde el edificio saluda a quien entra\ny el reloj mira a todos por igual.»",
+      nota: "Guardá el verso: los tres juntos indican dónde se esconde el cofre."
+    },
+    {
+      id: "pista2", glifo: "🧭", nombre: "Brújula", orden: 3,
+      titulo: "La brújula inquieta",
+      encabezado: "Pista II de III",
+      texto: "La aguja no busca el norte: gira sin descanso, como si el rumbo estuviera dentro del edificio.",
+      versos: "«Subí hasta donde el eco repite los pasos\ny la luz llega tarde por la mañana.»",
+      nota: "Dos versos en tu poder. Falta el tercero."
+    },
+    {
+      id: "pista3", glifo: "💎", nombre: "Cristal", orden: 4,
+      titulo: "El cristal verde",
+      encabezado: "Pista III de III",
+      texto: "Un cristal que late con luz propia. Es el último fragmento del mensaje del vigía.",
+      versos: "«Detrás de lo que todos miran sin ver,\nallí descansa lo que nadie buscó.»",
+      nota: "Ya tenés el mensaje completo. Encontrá el marcador del cofre."
+    },
+    {
+      id: "tesoro", glifo: "🏆", nombre: "Cofre", orden: 5,
+      titulo: "El cofre del vigía",
+      encabezado: "Marcador V de V",
+      texto: "",
+      versos: "",
+      nota: ""
+    }
+  ];
+
+  var PISTAS = ["inicio", "pista1", "pista2", "pista3"];
+  var CLAVE = "sacre-coeur-ar-v1";
+  var ESPERA_MS = 900;   // tiempo que el marcador debe verse para contarlo
+
+  /* ══════════ Estado ══════════ */
+  var estado = cargar();
+
+  function estadoNuevo() {
+    return { hallados: [], inicioTs: null, finTs: null, vistoIntro: false };
+  }
+  function cargar() {
+    try {
+      var crudo = localStorage.getItem(CLAVE);
+      if (!crudo) return estadoNuevo();
+      var s = JSON.parse(crudo);
+      if (!s || !Array.isArray(s.hallados)) return estadoNuevo();
+      return s;
+    } catch (e) { return estadoNuevo(); }
+  }
+  function guardar() {
+    try { localStorage.setItem(CLAVE, JSON.stringify(estado)); } catch (e) {}
+  }
+  function tiene(id) { return estado.hallados.indexOf(id) !== -1; }
+  function pistasCompletas() {
+    return PISTAS.every(tiene);
+  }
+  function juegoTerminado() { return tiene("tesoro"); }
+
+  /* ══════════ Elementos ══════════ */
+  var $velo = document.getElementById("velo");
+  var $carta = document.getElementById("carta");
+  var $progreso = document.getElementById("progreso");
+  var $aviso = document.getElementById("aviso");
+  var $guia = document.getElementById("guia");
+  var $crono = document.getElementById("cronometro");
+
+  /* ══════════ Sonido (WebAudio, sin archivos) ══════════ */
+  var actx = null;
+  function audio() {
+    if (!actx) {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) actx = new AC();
+    }
+    if (actx && actx.state === "suspended") actx.resume();
+    return actx;
+  }
+  function tono(freq, inicio, dur, vol, tipo) {
+    var ctx = audio(); if (!ctx) return;
+    var t0 = ctx.currentTime + inicio;
+    var osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = tipo || "sine";
+    osc.frequency.setValueAtTime(freq, t0);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(vol, t0 + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(g); g.connect(ctx.destination);
+    osc.start(t0); osc.stop(t0 + dur + 0.05);
+  }
+  function sonarHallazgo() {
+    [[659.25, 0], [880, 0.11], [1174.66, 0.22]].forEach(function (n) {
+      tono(n[0], n[1], 0.34, 0.18, "triangle");
+    });
+  }
+  function sonarBloqueado() {
+    tono(180, 0, 0.22, 0.16, "square");
+    tono(120, 0.14, 0.3, 0.14, "square");
+  }
+  function sonarVictoria() {
+    var notas = [523.25, 659.25, 783.99, 1046.5, 1318.5];
+    notas.forEach(function (f, i) { tono(f, i * 0.14, 0.6, 0.2, "triangle"); });
+    tono(261.63, 0.7, 1.6, 0.14, "sine");
+    tono(392.0, 0.7, 1.6, 0.12, "sine");
+  }
+  function vibrar(p) { if (navigator.vibrate) try { navigator.vibrate(p); } catch (e) {} }
+
+  /* ══════════ HUD ══════════ */
+  function pintarProgreso() {
+    $progreso.innerHTML = "";
+    MARCADORES.forEach(function (m) {
+      var d = document.createElement("div");
+      var hallado = tiene(m.id);
+      var bloqueado = m.id === "tesoro" && !pistasCompletas();
+      d.className = "ficha" + (hallado ? " hallado" : "") + (bloqueado && !hallado ? " bloqueada" : "");
+      d.id = "ficha-" + m.id;
+      d.innerHTML = '<div class="glifo">' + (bloqueado && !hallado ? "🔒" : m.glifo) + "</div>" +
+                    '<div class="nombre">' + m.nombre + "</div>";
+      $progreso.appendChild(d);
+    });
+  }
+
+  var avisoTimer = null;
+  function avisar(txt, ms) {
+    $aviso.textContent = txt;
+    $aviso.classList.add("visible");
+    clearTimeout(avisoTimer);
+    avisoTimer = setTimeout(function () { $aviso.classList.remove("visible"); }, ms || 2600);
+  }
+
+  function fmt(ms) {
+    var s = Math.max(0, Math.floor(ms / 1000));
+    var m = Math.floor(s / 60);
+    return (m < 10 ? "0" : "") + m + ":" + ((s % 60) < 10 ? "0" : "") + (s % 60);
+  }
+  function transcurrido() {
+    if (!estado.inicioTs) return 0;
+    return (estado.finTs || Date.now()) - estado.inicioTs;
+  }
+  setInterval(function () { $crono.textContent = fmt(transcurrido()); }, 500);
+
+  /* ══════════ Paneles ══════════ */
+  var cerrarActual = null;
+  function abrirCarta(html, alCerrar) {
+    $carta.innerHTML = html;
+    $velo.classList.add("visible");
+    $guia.classList.add("oculto");
+    cerrarActual = alCerrar || null;
+    Array.prototype.forEach.call($carta.querySelectorAll("[data-cerrar]"), function (b) {
+      b.addEventListener("click", cerrarCarta);
+    });
+  }
+  function cerrarCarta() {
+    $velo.classList.remove("visible");
+    $guia.classList.remove("oculto");
+    var f = cerrarActual; cerrarActual = null;
+    if (f) f();
+  }
+
+  function cartaIntro() {
+    abrirCarta(
+      '<div class="sello">🗺️</div>' +
+      "<h2>Búsqueda del tesoro en RA</h2>" +
+      "<h1>El tesoro del Sacré Coeur</h1>" +
+      "<p>En 1932, el vigía nocturno del edificio escondió algo y repartió tres señales para encontrarlo. " +
+      "Nadie las reunió nunca. Hoy te toca a vos.</p>" +
+      "<ol>" +
+      "<li>Permití el acceso a la <b>cámara</b> cuando el navegador lo pida.</li>" +
+      "<li>Apuntá a cada <b>marcador</b> y mantenelo encuadrado un segundo.</li>" +
+      "<li>Reuní las <b>3 pistas</b> para desbloquear el cofre.</li>" +
+      "</ol>" +
+      '<button class="boton" data-cerrar>Comenzar la búsqueda</button>' +
+      '<p class="nota">¿No tenés los marcadores impresos? ' +
+      '<a href="marcadores.html" target="_blank" rel="noopener">Abrilos acá</a> para imprimirlos o mostrarlos en otra pantalla.</p>',
+      function () {
+        estado.vistoIntro = true; guardar();
+        audio();
+        avisar("Buscá el primer marcador 🔎", 3200);
+      }
+    );
+  }
+
+  function cartaAyuda() {
+    abrirCarta(
+      '<div class="sello">🔎</div>' +
+      "<h1>Cómo jugar</h1>" +
+      "<ol>" +
+      "<li>Sostené el celular a unos <b>25–50 cm</b> del marcador.</li>" +
+      "<li>Que el <b>marco negro completo</b> entre en la pantalla, sin reflejos ni sombras fuertes.</li>" +
+      "<li>Mantenelo quieto <b>1 segundo</b>: la pista se registra sola.</li>" +
+      "<li>El progreso se guarda en este dispositivo; podés cerrar y volver.</li>" +
+      "</ol>" +
+      "<p>Reuní el diario y las tres pistas. Recién ahí el cofre se abre.</p>" +
+      '<button class="boton" data-cerrar>Volver al juego</button>' +
+      '<p class="nota"><a href="marcadores.html" target="_blank" rel="noopener">Ver / imprimir los marcadores</a></p>'
+    );
+  }
+
+  function cartaPista(m) {
+    var restantes = PISTAS.filter(function (id) { return !tiene(id); }).length;
+    var pie = restantes === 0
+      ? "<b>Mensaje completo.</b> Encontrá el marcador del cofre."
+      : "Te faltan <b>" + restantes + "</b> " + (restantes === 1 ? "señal" : "señales") + ".";
+    abrirCarta(
+      '<div class="sello">' + m.glifo + "</div>" +
+      "<h2>" + m.encabezado + "</h2>" +
+      "<h1>" + m.titulo + "</h1>" +
+      "<p>" + m.texto + "</p>" +
+      '<p class="versos">' + m.versos + "</p>" +
+      "<p>" + m.nota + "</p>" +
+      '<button class="boton" data-cerrar>Seguir buscando</button>' +
+      '<p class="nota">' + pie + "</p>"
+    );
+  }
+
+  function cartaCofreCerrado() {
+    var faltan = PISTAS.filter(function (id) { return !tiene(id); })
+      .map(function (id) { return buscar(id).nombre; });
+    abrirCarta(
+      '<div class="sello">🔒</div>' +
+      "<h1>El cofre está cerrado</h1>" +
+      "<p>Encontraste el cofre del vigía, pero la cerradura no cede: todavía te faltan señales.</p>" +
+      '<p class="versos">Falta: ' + faltan.join(" · ") + "</p>" +
+      '<button class="boton" data-cerrar>Volver a buscar</button>'
+    );
+  }
+
+  function cartaFinal() {
+    var tiempo = fmt(transcurrido());
+    abrirCarta(
+      '<div class="sello">🏆</div>' +
+      "<h2>Búsqueda completada</h2>" +
+      "<h1>¡Encontraste el tesoro!</h1>" +
+      "<p>El cofre del vigía se abre. Dentro no hay oro: hay un plano del Sacré Coeur con cada rincón dibujado a mano, " +
+      "y una nota que dice <i>«el edificio era el tesoro»</i>.</p>" +
+      '<p class="versos">Los 5 marcadores · Tiempo: ' + tiempo + "</p>" +
+      '<button class="boton" data-cerrar>Contemplar el cofre</button>' +
+      '<button class="boton fantasma" id="btn-otra">Jugar de nuevo</button>' +
+      '<p class="nota">Laboratorio de Realidad Aumentada · AR.js + A-Frame</p>'
+    );
+    var otra = document.getElementById("btn-otra");
+    if (otra) otra.addEventListener("click", reiniciar);
+  }
+
+  function buscar(id) {
+    for (var i = 0; i < MARCADORES.length; i++) if (MARCADORES[i].id === id) return MARCADORES[i];
+    return null;
+  }
+
+  /* ══════════ Confeti ══════════ */
+  var lienzo = document.getElementById("confeti"), ctx2d = lienzo.getContext("2d"), trozos = [], animando = false;
+  function lanzarConfeti() {
+    lienzo.style.display = "block";
+    lienzo.width = innerWidth; lienzo.height = innerHeight;
+    var colores = ["#f0c069", "#ffe4a8", "#5fd6a6", "#ff7a6b", "#f6ead2"];
+    trozos = [];
+    for (var i = 0; i < 140; i++) {
+      trozos.push({
+        x: Math.random() * lienzo.width, y: -20 - Math.random() * lienzo.height * 0.6,
+        w: 5 + Math.random() * 7, h: 8 + Math.random() * 10,
+        vy: 1.6 + Math.random() * 2.6, vx: -1 + Math.random() * 2,
+        rot: Math.random() * Math.PI, vr: -0.12 + Math.random() * 0.24,
+        c: colores[(Math.random() * colores.length) | 0]
+      });
+    }
+    if (!animando) { animando = true; requestAnimationFrame(pintarConfeti); }
+    setTimeout(function () { trozos = []; }, 6500);
+  }
+  function pintarConfeti() {
+    ctx2d.clearRect(0, 0, lienzo.width, lienzo.height);
+    if (!trozos.length) { animando = false; lienzo.style.display = "none"; return; }
+    trozos.forEach(function (p) {
+      p.y += p.vy; p.x += p.vx; p.rot += p.vr;
+      if (p.y > lienzo.height + 30) p.y = -20;
+      ctx2d.save(); ctx2d.translate(p.x, p.y); ctx2d.rotate(p.rot);
+      ctx2d.fillStyle = p.c; ctx2d.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); ctx2d.restore();
+    });
+    requestAnimationFrame(pintarConfeti);
+  }
+  addEventListener("resize", function () { lienzo.width = innerWidth; lienzo.height = innerHeight; });
+
+  /* ══════════ Lógica de marcadores ══════════ */
+  var cofreCerrado = document.getElementById("cofre-cerrado");
+  var cofreAbierto = document.getElementById("cofre-abierto");
+
+  function pintarCofre() {
+    var abierto = pistasCompletas();
+    if (cofreCerrado) cofreCerrado.setAttribute("visible", !abierto);
+    if (cofreAbierto) cofreAbierto.setAttribute("visible", abierto);
+  }
+
+  function registrar(id) {
+    var m = buscar(id);
+    if (!m || tiene(id)) return;
+
+    if (id === "tesoro" && !pistasCompletas()) {   // cofre bloqueado
+      sonarBloqueado(); vibrar([40, 60, 40]);
+      cartaCofreCerrado();
+      return;
+    }
+
+    if (!estado.inicioTs) estado.inicioTs = Date.now();
+    estado.hallados.push(id);
+    guardar();
+    pintarProgreso();
+    pintarCofre();
+
+    var ficha = document.getElementById("ficha-" + id);
+    if (ficha) { ficha.classList.add("nueva"); setTimeout(function () { ficha.classList.remove("nueva"); }, 700); }
+
+    if (id === "tesoro") {
+      estado.finTs = Date.now(); guardar();
+      sonarVictoria(); vibrar([80, 50, 80, 50, 200]);
+      lanzarConfeti();
+      setTimeout(cartaFinal, 450);
+    } else {
+      sonarHallazgo(); vibrar(60);
+      cartaPista(m);
+      if (pistasCompletas()) {
+        setTimeout(function () { avisar("El cofre ya puede abrirse 🔓", 3600); }, 400);
+      }
+    }
+  }
+
+  MARCADORES.forEach(function (m) {
+    var el = document.getElementById("mk-" + m.id);
+    if (!el) return;
+    var temporizador = null;
+    el.addEventListener("markerFound", function () {
+      if ($velo.classList.contains("visible")) return;      // hay un panel abierto
+      if (tiene(m.id)) {
+        if (m.id === "tesoro" && juegoTerminado()) return;
+        avisar(m.glifo + "  " + m.nombre + " · ya la tenías", 1800);
+        return;
+      }
+      clearTimeout(temporizador);
+      temporizador = setTimeout(function () { registrar(m.id); }, ESPERA_MS);
+    });
+    el.addEventListener("markerLost", function () { clearTimeout(temporizador); });
+  });
+
+  /* ══════════ Botones ══════════ */
+  document.getElementById("btn-ayuda").addEventListener("click", cartaAyuda);
+  document.getElementById("btn-reset").addEventListener("click", function () {
+    abrirCarta(
+      '<div class="sello">↺</div>' +
+      "<h1>¿Reiniciar la búsqueda?</h1>" +
+      "<p>Se borran las pistas encontradas y el cronómetro vuelve a cero.</p>" +
+      '<button class="boton" id="btn-si">Sí, empezar de nuevo</button>' +
+      '<button class="boton fantasma" data-cerrar>Cancelar</button>'
+    );
+    document.getElementById("btn-si").addEventListener("click", reiniciar);
+  });
+
+  function reiniciar() {
+    estado = estadoNuevo();
+    estado.vistoIntro = true;
+    guardar();
+    pintarProgreso(); pintarCofre();
+    cerrarCarta();
+    avisar("Búsqueda reiniciada 🔎", 2200);
+  }
+
+  /* ══════════ Arranque ══════════ */
+  pintarProgreso();
+  pintarCofre();
+  if (!estado.vistoIntro) {
+    cartaIntro();
+  } else if (juegoTerminado()) {
+    avisar("Ya encontraste el tesoro · ↺ para jugar de nuevo", 4000);
+  } else {
+    avisar("Apuntá la cámara a un marcador 🔎", 3000);
+  }
+
+  // Aviso si la página no corre sobre HTTPS (la cámara no va a arrancar)
+  if (location.protocol !== "https:" && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
+    avisar("Necesitás abrir el juego por HTTPS para usar la cámara", 6000);
+  }
+})();
+</script>
+</body>
+</html>
