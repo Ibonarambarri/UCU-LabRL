@@ -15,14 +15,24 @@
     --sombra:0 18px 50px rgba(0,0,0,.55);
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;height:100%;overflow:hidden;background:var(--tinta);
+  /* El fondo va en <html>, NO en <body>: AR.js le pone z-index:-2 al <video> de la
+     camara, y por el orden de pintado de CSS el fondo de un body opaco se dibuja
+     POR ENCIMA de los hijos con z-index negativo (la camara quedaria invisible).
+     El fondo del elemento raiz, en cambio, se pinta antes que todo. */
+  html{background:var(--tinta)}
+  html,body{margin:0;height:100%;overflow:hidden;
     font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;color:var(--pergamino)}
+  body{background:transparent}
   .ui{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif}
 
   /* --- capa AR --- */
-  a-scene{position:fixed;inset:0}
+  a-scene{position:fixed;inset:0;background:transparent}
   .a-enter-vr,.a-enter-ar,.a-orientation-modal{display:none!important}
-  video,canvas.a-canvas{object-fit:cover}
+  canvas.a-canvas{background:transparent!important}
+  /* AR.js dimensiona el video por su cuenta (onResizeElement); aca solo garantizamos
+     que sea visible y quede detras de la escena. */
+  #arjs-video,video{display:block!important;visibility:visible!important;opacity:1!important;
+    object-fit:cover;z-index:-2}
 
   /* --- HUD --- */
   #hud{position:fixed;inset:0;pointer-events:none;z-index:10;
@@ -629,6 +639,49 @@
   } else {
     avisar("Apuntá la cámara a un marcador 🔎", 3000);
   }
+
+  /* ══════════ Vigilancia de la cámara ══════════ */
+  function videoCamara() {
+    return document.getElementById("arjs-video") || document.querySelector("video");
+  }
+  function cartaSinCamara() {
+    abrirCarta(
+      '<div class="sello">📷</div>' +
+      "<h1>No llega la imagen</h1>" +
+      "<p>La escena AR está lista, pero el navegador no está entregando video.</p>" +
+      "<ol>" +
+      "<li>Revisá que le hayas dado <b>permiso de cámara</b> a este sitio.</li>" +
+      "<li>Cerrá otras apps o pestañas que estén <b>usando la cámara</b>.</li>" +
+      "<li>En iPhone, usá <b>Safari</b> o Chrome; no funciona dentro del navegador de Instagram o WhatsApp.</li>" +
+      "<li>Si estás en modo de <b>ahorro de energía</b>, desactivalo y recargá.</li>" +
+      "</ol>" +
+      '<button class="boton" id="btn-recargar">Reintentar</button>' +
+      '<button class="boton fantasma" data-cerrar>Seguir igual</button>'
+    );
+    var r = document.getElementById("btn-recargar");
+    if (r) r.addEventListener("click", function () { location.reload(); });
+  }
+
+  var camaraOk = false, intentosCam = 0;
+  var vigia = setInterval(function () {
+    var v = videoCamara();
+    if (v && v.videoWidth > 0 && !v.paused) {
+      clearInterval(vigia);
+      if (!camaraOk) {
+        camaraOk = true;
+        // Fuerza a AR.js a reajustar el encuadre del video al tamaño real de pantalla.
+        setTimeout(function () { dispatchEvent(new Event("resize")); }, 200);
+      }
+      return;
+    }
+    if (++intentosCam >= 12) {          // ~12 s sin imagen
+      clearInterval(vigia);
+      if (!$velo.classList.contains("visible")) cartaSinCamara();
+    }
+  }, 1000);
+  addEventListener("orientationchange", function () {
+    setTimeout(function () { dispatchEvent(new Event("resize")); }, 350);
+  });
 
   // Aviso si la página no corre sobre HTTPS (la cámara no va a arrancar)
   if (location.protocol !== "https:" && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
