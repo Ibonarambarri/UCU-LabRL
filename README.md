@@ -7,6 +7,8 @@ Funciona en el navegador del celular o de la notebook, sin instalar nada.
 
 **🖨️ Marcadores para imprimir:** https://ibonarambarri.github.io/tesoro-sacre-coeur-ar/marcadores.html
 
+**🖥️ Marcadores en pantalla (sin impresora):** https://ibonarambarri.github.io/tesoro-sacre-coeur-ar/pantalla.html
+
 ---
 
 ## Cómo se juega
@@ -34,6 +36,7 @@ El progreso se guarda en `localStorage`, así que se puede cerrar y retomar.
 ```
 index.html           juego (escena AR + HUD + lógica)
 marcadores.html      marcadores para imprimir (A4, uno por hoja)
+pantalla.html        marcadores a pantalla completa, para mostrar en otro monitor
 markers/*.svg        marcadores imprimibles 100×100 mm
 tools/gen_markers.py generador de los marcadores
 ```
@@ -53,6 +56,15 @@ ARToolKit los confundía con un tercero, y la confianza mediana era −1.00 (sin
 Los barcode decodifican un código binario con corrección de errores en vez de comparar
 imágenes. Medido en las mismas condiciones, la confianza es **1.00** y no hay ninguna
 confusión entre marcadores.
+
+### La zona blanca es parte del marcador
+
+ARToolKit localiza el marcador buscando un **cuadrado negro sobre un fondo más claro**.
+Si el negro llega al borde de la imagen no hay cuadrado que encontrar y **no se detecta nada**:
+medido en el banco de pruebas, sin margen la detección es de 0 sobre 5, y con margen 5 sobre 5.
+
+Por eso el margen blanco va **dentro del SVG** (14 × 14 cm en total para un cuadro de 10 × 10 cm),
+y así sobrevive aunque el archivo se imprima a sangre o se abra a pantalla completa. No lo recortes.
 
 Para regenerar los SVG imprimibles:
 

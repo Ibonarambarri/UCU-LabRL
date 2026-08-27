@@ -25,24 +25,33 @@ CODIGOS = {
     "tesoro": (5, [[1,1,0],[1,1,0],[1,1,0]]),
 }
 
-LADO_MM = 100.0     # marcador impreso de 10 x 10 cm
+LADO_MM = 100.0     # cuadro negro del marcador: 10 x 10 cm
+QUIETO  = 0.20      # zona blanca alrededor, en fracción del lado del cuadro
+
+# La zona blanca va DENTRO del SVG a propósito. ARToolKit localiza el marcador
+# buscando un cuadrado negro contra un fondo más claro: si el negro llega al borde
+# de la imagen no hay cuadrado que encontrar y no se detecta nada. Horneándola acá,
+# el margen sobrevive aunque el SVG se imprima a sangre o se abra a pantalla completa.
 
 
 def svg(grilla, lado=LADO_MM):
+    quieto = lado * QUIETO
+    total = lado + 2 * quieto
     borde = lado * 0.25
     inner = lado * 0.5
     cell = inner / 3.0
     p = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{lado}mm" height="{lado}mm" '
-        f'viewBox="0 0 {lado} {lado}" shape-rendering="crispEdges">',
-        f'<rect x="0" y="0" width="{lado}" height="{lado}" fill="#000000"/>',
-        f'<rect x="{borde}" y="{borde}" width="{inner}" height="{inner}" fill="#ffffff"/>',
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{total}mm" height="{total}mm" '
+        f'viewBox="0 0 {total} {total}" shape-rendering="crispEdges">',
+        f'<rect x="0" y="0" width="{total}" height="{total}" fill="#ffffff"/>',
+        f'<rect x="{quieto}" y="{quieto}" width="{lado}" height="{lado}" fill="#000000"/>',
+        f'<rect x="{quieto+borde}" y="{quieto+borde}" width="{inner}" height="{inner}" fill="#ffffff"/>',
     ]
     for r in range(3):
         for c in range(3):
             if grilla[r][c]:
-                x = borde + c * cell
-                y = borde + r * cell
+                x = quieto + borde + c * cell
+                y = quieto + borde + r * cell
                 p.append(f'<rect x="{x:.4f}" y="{y:.4f}" width="{cell:.4f}" '
                          f'height="{cell:.4f}" fill="#000000"/>')
     p.append("</svg>")

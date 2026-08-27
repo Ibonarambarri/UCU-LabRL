@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title>Marcadores en pantalla · El tesoro del Sacré Coeur</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🖥️</text></svg>">
+<style>
+  /* Fondo blanco forzado: el detector necesita el marcador negro sobre claro. */
+  html,body{margin:0;height:100%;background:#fff !important;color:#1b1f2a;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
+    overscroll-behavior:none}
+  body{display:flex;flex-direction:column;align-items:center;justify-content:center;
+    user-select:none;-webkit-user-select:none}
+
+  #marco{flex:1;width:100%;display:flex;align-items:center;justify-content:center;padding:2vmin}
+  #marca{width:min(82vmin,82vw);height:min(82vmin,82vw);display:block}
+
+  #pie{width:100%;padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+    display:flex;align-items:center;gap:12px;justify-content:center}
+  .nav{border:1px solid #d5d5d5;background:#fff;color:#1b1f2a;border-radius:11px;
+    width:52px;height:44px;font-size:19px;cursor:pointer}
+  .nav:active{background:#f0f0f0}
+  #titulo{min-width:190px;text-align:center}
+  #titulo b{display:block;font-size:17px}
+  #titulo span{font-size:12.5px;color:#70747f}
+  #ayuda{position:fixed;top:0;left:0;right:0;padding:9px 14px;text-align:center;
+    font-size:12.5px;color:#70747f}
+  #ayuda a{color:#8a6316}
+
+  @media (min-width:900px){ #marca{width:min(78vmin,78vw);height:min(78vmin,78vw)} }
+  @media print{ #pie,#ayuda{display:none} }
+</style>
+</head>
+<body>
+
+<div id="ayuda">Mostrá esta pantalla al celular · <a href="index.html">volver al juego</a> · <a href="marcadores.html">versión para imprimir</a></div>
+
+<div id="marco"><img id="marca" alt=""></div>
+
+<div id="pie">
+  <button class="nav" id="ant" aria-label="Anterior">‹</button>
+  <div id="titulo"><b></b><span></span></div>
+  <button class="nav" id="sig" aria-label="Siguiente">›</button>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var MARCAS = [
+    { id: "inicio", nombre: "📜 El diario del vigía", cod: "barcode 1" },
+    { id: "pista1", nombre: "🗝️ La llave de bronce", cod: "barcode 2" },
+    { id: "pista2", nombre: "🧭 La brújula inquieta", cod: "barcode 3" },
+    { id: "pista3", nombre: "💎 El cristal verde",    cod: "barcode 4" },
+    { id: "tesoro", nombre: "🏆 El cofre del vigía",  cod: "barcode 5" }
+  ];
+  var i = 0;
+  var $img = document.getElementById("marca");
+  var $t = document.querySelector("#titulo b");
+  var $s = document.querySelector("#titulo span");
+
+  function pintar() {
+    var m = MARCAS[i];
+    $img.src = "markers/" + m.id + ".svg";
+    $img.alt = "Marcador " + m.nombre;
+    $t.textContent = m.nombre;
+    $s.textContent = (i + 1) + " de " + MARCAS.length + " · " + m.cod;
+    try { location.hash = m.id; } catch (e) {}
+  }
+  function mover(d) { i = (i + d + MARCAS.length) % MARCAS.length; pintar(); }
+
+  document.getElementById("ant").addEventListener("click", function () { mover(-1); });
+  document.getElementById("sig").addEventListener("click", function () { mover(1); });
+  addEventListener("keydown", function (e) {
+    if (e.key === "ArrowRight" || e.key === " ") mover(1);
+    if (e.key === "ArrowLeft") mover(-1);
+  });
+  // deslizar en pantallas tactiles
+  var x0 = null;
+  addEventListener("touchstart", function (e) { x0 = e.touches[0].clientX; }, { passive: true });
+  addEventListener("touchend", function (e) {
+    if (x0 === null) return;
+    var dx = e.changedTouches[0].clientX - x0;
+    if (Math.abs(dx) > 45) mover(dx < 0 ? 1 : -1);
+    x0 = null;
+  }, { passive: true });
+
+  var inicial = MARCAS.map(function (m) { return m.id; }).indexOf(location.hash.slice(1));
+  if (inicial >= 0) i = inicial;
+  pintar();
+})();
+</script>
+</body>
+</html>
