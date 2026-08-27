@@ -127,14 +127,14 @@
   loading-screen="enabled: false"
   renderer="antialias: true; alpha: true; colorManagement: true; physicallyCorrectLights: true"
   embedded
-  arjs="sourceType: webcam; detectionMode: mono; patternRatio: 0.5; maxDetectionRate: 60; canvasWidth: 640; canvasHeight: 480; debugUIEnabled: false;">
+  arjs="sourceType: webcam; detectionMode: mono_and_matrix; matrixCodeType: 3x3_HAMMING63; maxDetectionRate: 60; canvasWidth: 640; canvasHeight: 480; debugUIEnabled: false;">
 
   <a-entity light="type: ambient; intensity: 0.85"></a-entity>
   <a-entity light="type: directional; intensity: 0.65" position="1 3 2"></a-entity>
 
   <!-- ══ MARCADOR 1 · EL DIARIO ══ -->
-  <a-marker id="mk-inicio" type="pattern" url="markers/inicio.patt"
-            smooth="true" smoothCount="10" smoothTolerance="0.01" smoothThreshold="5">
+  <a-marker id="mk-inicio" type="barcode" value="1"
+            smooth="true" smoothCount="6" smoothTolerance="0.02" smoothThreshold="2">
     <a-entity position="0 0 0">
       <a-plane position="0 0.01 0" rotation="-90 0 0" width="1.35" height="0.95"
                color="#f3e3c3" opacity="0.96"
@@ -151,8 +151,8 @@
   </a-marker>
 
   <!-- ══ MARCADOR 2 · LA LLAVE ══ -->
-  <a-marker id="mk-pista1" type="pattern" url="markers/pista1.patt"
-            smooth="true" smoothCount="10" smoothTolerance="0.01" smoothThreshold="5">
+  <a-marker id="mk-pista1" type="barcode" value="2"
+            smooth="true" smoothCount="6" smoothTolerance="0.02" smoothThreshold="2">
     <a-entity position="0 0.4 0" rotation="-25 0 0"
               animation="property: position; to: 0 0.58 0; dir: alternate; dur: 1900; loop: true; easing: easeInOutSine">
       <a-entity animation="property: rotation; to: -25 360 0; loop: true; dur: 8000; easing: linear">
@@ -171,8 +171,8 @@
   </a-marker>
 
   <!-- ══ MARCADOR 3 · LA BRUJULA ══ -->
-  <a-marker id="mk-pista2" type="pattern" url="markers/pista2.patt"
-            smooth="true" smoothCount="10" smoothTolerance="0.01" smoothThreshold="5">
+  <a-marker id="mk-pista2" type="barcode" value="3"
+            smooth="true" smoothCount="6" smoothTolerance="0.02" smoothThreshold="2">
     <a-entity position="0 0.3 0" rotation="-90 0 0">
       <a-cylinder radius="0.42" height="0.07" color="#243049" metalness="0.4" roughness="0.5"></a-cylinder>
       <a-torus radius="0.42" radius-tubular="0.04" color="#f0c069" metalness="0.8" roughness="0.2"></a-torus>
@@ -188,8 +188,8 @@
   </a-marker>
 
   <!-- ══ MARCADOR 4 · EL CRISTAL ══ -->
-  <a-marker id="mk-pista3" type="pattern" url="markers/pista3.patt"
-            smooth="true" smoothCount="10" smoothTolerance="0.01" smoothThreshold="5">
+  <a-marker id="mk-pista3" type="barcode" value="4"
+            smooth="true" smoothCount="6" smoothTolerance="0.02" smoothThreshold="2">
     <a-entity position="0 0.45 0"
               animation="property: rotation; to: 0 360 0; loop: true; dur: 6000; easing: linear">
       <a-octahedron radius="0.36" color="#5fd6a6" opacity="0.8" transparent="true"
@@ -202,8 +202,8 @@
   </a-marker>
 
   <!-- ══ MARCADOR 5 · EL COFRE ══ -->
-  <a-marker id="mk-tesoro" type="pattern" url="markers/tesoro.patt"
-            smooth="true" smoothCount="10" smoothTolerance="0.01" smoothThreshold="5">
+  <a-marker id="mk-tesoro" type="barcode" value="5"
+            smooth="true" smoothCount="6" smoothTolerance="0.02" smoothThreshold="2">
     <!-- cofre cerrado -->
     <a-entity id="cofre-cerrado" position="0 0.22 0">
       <a-box width="0.9" height="0.44" depth="0.6" color="#3b2a16" metalness="0.2" roughness="0.8"></a-box>
@@ -300,7 +300,12 @@
 
   var PISTAS = ["inicio", "pista1", "pista2", "pista3"];
   var CLAVE = "sacre-coeur-ar-v1";
-  var ESPERA_MS = 900;   // tiempo que el marcador debe verse para contarlo
+  // AR.js no entrega una deteccion estable: alterna markerFound/markerLost varias
+  // veces por segundo. Por eso NO se exige visibilidad continua, sino tiempo visible
+  // ACUMULADO, con una gracia que ignora los parpadeos cortos.
+  var ESPERA_MS  = 500;   // tiempo visible acumulado necesario para contar el marcador
+  var GRACIA_MS  = 700;   // cuanto se tolera perderlo antes de empezar a descontar
+  var PULSO_MS   = 100;   // cada cuanto se muestrea la visibilidad
 
   /* ══════════ Estado ══════════ */
   var estado = cargar();
@@ -590,22 +595,41 @@
     }
   }
 
+  var seguimiento = {};
   MARCADORES.forEach(function (m) {
+    seguimiento[m.id] = { acumulado: 0, ultimoVisto: 0, avisado: 0 };
     var el = document.getElementById("mk-" + m.id);
     if (!el) return;
-    var temporizador = null;
     el.addEventListener("markerFound", function () {
-      if ($velo.classList.contains("visible")) return;      // hay un panel abierto
-      if (tiene(m.id)) {
-        if (m.id === "tesoro" && juegoTerminado()) return;
-        avisar(m.glifo + "  " + m.nombre + " · ya la tenías", 1800);
-        return;
-      }
-      clearTimeout(temporizador);
-      temporizador = setTimeout(function () { registrar(m.id); }, ESPERA_MS);
+      if (!tiene(m.id) || $velo.classList.contains("visible")) return;
+      if (m.id === "tesoro" && juegoTerminado()) return;
+      var s = seguimiento[m.id], ahora = Date.now();
+      if (ahora - s.avisado < 4000) return;
+      s.avisado = ahora;
+      avisar(m.glifo + "  " + m.nombre + " · ya la tenías", 1800);
     });
-    el.addEventListener("markerLost", function () { clearTimeout(temporizador); });
   });
+
+  function marcadorVisible(id) {
+    var el = document.getElementById("mk-" + id);
+    return !!(el && el.object3D && el.object3D.visible);
+  }
+
+  setInterval(function () {
+    if ($velo.classList.contains("visible")) return;   // hay un panel abierto
+    var ahora = Date.now();
+    for (var i = 0; i < MARCADORES.length; i++) {
+      var id = MARCADORES[i].id, s = seguimiento[id];
+      if (tiene(id)) continue;
+      if (marcadorVisible(id)) {
+        s.ultimoVisto = ahora;
+        s.acumulado += PULSO_MS;
+        if (s.acumulado >= ESPERA_MS) { s.acumulado = 0; registrar(id); return; }
+      } else if (s.acumulado > 0 && ahora - s.ultimoVisto > GRACIA_MS) {
+        s.acumulado = Math.max(0, s.acumulado - PULSO_MS);   // decae, no se reinicia
+      }
+    }
+  }, PULSO_MS);
 
   /* ══════════ Botones ══════════ */
   document.getElementById("btn-ayuda").addEventListener("click", cartaAyuda);

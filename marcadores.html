@@ -81,7 +81,7 @@
     <div class="datos">
       <div class="etiqueta">Marcador 1</div>
       <h2>📜 El diario del vigía</h2>
-      <p>Punto de partida: presenta la historia y el desafío. <code>markers/inicio.patt</code></p>
+      <p>Punto de partida: presenta la historia y el desafío. <code>barcode 1</code></p>
     </div>
   </section>
 
@@ -90,7 +90,7 @@
     <div class="datos">
       <div class="etiqueta">Marcador 2</div>
       <h2>🗝️ La llave de bronce</h2>
-      <p>Primera pista del mensaje. <code>markers/pista1.patt</code></p>
+      <p>Primera pista del mensaje. <code>barcode 2</code></p>
     </div>
   </section>
 
@@ -99,7 +99,7 @@
     <div class="datos">
       <div class="etiqueta">Marcador 3</div>
       <h2>🧭 La brújula inquieta</h2>
-      <p>Segunda pista del mensaje. <code>markers/pista2.patt</code></p>
+      <p>Segunda pista del mensaje. <code>barcode 3</code></p>
     </div>
   </section>
 
@@ -108,7 +108,7 @@
     <div class="datos">
       <div class="etiqueta">Marcador 4</div>
       <h2>💎 El cristal verde</h2>
-      <p>Tercera pista del mensaje. <code>markers/pista3.patt</code></p>
+      <p>Tercera pista del mensaje. <code>barcode 4</code></p>
     </div>
   </section>
 
@@ -117,14 +117,15 @@
     <div class="datos">
       <div class="etiqueta">Marcador 5</div>
       <h2>🏆 El cofre del vigía</h2>
-      <p>Solo se abre con las 4 señales anteriores. <code>markers/tesoro.patt</code></p>
+      <p>Solo se abre con las 4 señales anteriores. <code>barcode 5</code></p>
     </div>
   </section>
 </main>
 
 <footer>
-  Patrones propios generados con <code>tools/gen_markers.py</code> (formato ARToolKit, 16×16 en 4 rotaciones).
-  Cada marcador se eligió por búsqueda para minimizar la confusión entre patrones.
+  Marcadores <b>barcode 3×3_HAMMING63</b> (ids 1 a 5), generados con <code>tools/gen_markers.py</code>.
+  El detector decodifica un código binario con corrección de errores en vez de comparar imágenes,
+  así que no hay confusión entre marcadores y la detección es mucho más estable.
 </footer>
 
 </body>

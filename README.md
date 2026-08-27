@@ -32,26 +32,29 @@ El progreso se guarda en `localStorage`, así que se puede cerrar y retomar.
 ## Estructura
 
 ```
-index.html          juego (escena AR + HUD + lógica)
-marcadores.html     marcadores para imprimir (A4, uno por hoja)
-markers/*.patt      patrones ARToolKit (16×16, 4 rotaciones)
-markers/*.svg       marcadores imprimibles 100×100 mm
-tools/gen_markers.py generador de patrones + SVG
+index.html           juego (escena AR + HUD + lógica)
+marcadores.html      marcadores para imprimir (A4, uno por hoja)
+markers/*.svg        marcadores imprimibles 100×100 mm
+tools/gen_markers.py generador de los marcadores
 ```
 
-## Marcadores propios
+## Marcadores: por qué barcode y no patrones
 
-Los 5 patrones son **propios**, no los de ejemplo de AR.js. `tools/gen_markers.py`:
+El juego usa marcadores **barcode `3x3_HAMMING63`** (ids 1 a 5 del set oficial de
+ARToolKit), no marcadores de patrón.
 
-- define cada marcador en una grilla 8×8 (anillo exterior blanco + 6×6 de contenido),
-- la escala a la grilla 16×16 y escribe el `.patt` en formato ARToolKit
-  (4 rotaciones × 3 canales × 16 filas),
-- emite el SVG imprimible con **exactamente** la misma grilla (borde negro del 25 %,
-  patrón interior del 50 %, que es el `patternRatio: 0.5` configurado en la escena),
-- el conjunto se eligió por búsqueda aleatoria minimizando la similitud entre patrones
-  considerando las 4 rotaciones: **0.58 máx.** sobre la región discriminante (azar ≈ 0.50).
+La primera versión usaba patrones propios (`.patt`) y **no se detectaban en el celular**.
+Midiéndolo con el detector real de AR.js, la causa quedó clara: la correlación de
+imágenes es demasiado frágil. Un desplazamiento del 2 % en la ventana de muestreo
+—error normal al estimar las esquinas del cuadrado— tiraba la confianza de 0.99 a 0.60,
+justo el umbral. En la práctica dos de los cinco marcadores no se reconocían **nunca**:
+ARToolKit los confundía con un tercero, y la confianza mediana era −1.00 (sin match).
 
-Para regenerarlos o cambiar los diseños:
+Los barcode decodifican un código binario con corrección de errores en vez de comparar
+imágenes. Medido en las mismas condiciones, la confianza es **1.00** y no hay ninguna
+confusión entre marcadores.
+
+Para regenerar los SVG imprimibles:
 
 ```bash
 python3 tools/gen_markers.py
@@ -59,8 +62,11 @@ python3 tools/gen_markers.py
 
 ## Detalles técnicos
 
-- **Anti-falsos positivos:** un marcador debe verse ~900 ms seguidos para contar (`ESPERA_MS`).
-- **Anti-jitter:** `smooth`, `smoothCount: 10`, `smoothTolerance: 0.01`, `smoothThreshold: 5`.
+- **Detección tolerante al parpadeo:** AR.js alterna `markerFound`/`markerLost` varias veces
+  por segundo. Exigir visibilidad *continua* hacía que el marcador casi nunca se registrara,
+  porque cada `markerLost` cancelaba el temporizador. Ahora se muestrea la visibilidad cada
+  100 ms y se acumulan 500 ms de tiempo visible, con 700 ms de gracia antes de descontar.
+- **Anti-jitter:** `smooth`, `smoothCount: 6`, `smoothTolerance: 0.02`, `smoothThreshold: 2`.
 - **Sin assets externos:** los sonidos se sintetizan con la Web Audio API (fanfarria, error,
   hallazgo) y el confeti se dibuja en un `<canvas>`; solo se cargan A-Frame y AR.js por CDN.
 - **Feedback:** panel narrativo por pista, aviso emergente, cronómetro, vibración
@@ -80,6 +86,9 @@ Para probar desde el celular en la red local hace falta HTTPS: lo más simple es
 ## Consejos para los beta testers
 
 - Papel **blanco mate**, sin brillo, y con el **margen blanco** alrededor del cuadro negro.
+- Probado en automático (Chrome headless + cámara sintética, detector real de AR.js):
+  el juego completa los 5 marcadores incluso con el marcador ocupando un tercio del cuadro,
+  desenfoque fuerte e inclinación de 18°.
 - Marcador **plano**, bien iluminado, sin sombras duras encima.
 - Cámara a **25–50 cm**, con todo el marco negro dentro de la pantalla.
 - También funciona apuntando a los marcadores mostrados en **otra pantalla**.
