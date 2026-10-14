@@ -70,7 +70,8 @@
   </div>
 
   <div class="acciones">
-    <button class="btn" onclick="window.print()">🖨️ Imprimir los 5 marcadores</button>
+    <a class="btn" href="marcadores.pdf" download>📄 Descargar los carteles en PDF</a>
+    <button class="btn sec" onclick="window.print()">🖨️ Imprimir esta página</button>
     <a class="btn sec" href="pantalla.html">🖥️ Mostrar en pantalla</a>
     <a class="btn sec" href="index.html">← Volver al juego</a>
   </div>
@@ -82,7 +83,7 @@
     <div class="datos">
       <div class="etiqueta">Marcador 1</div>
       <h2>📜 El diario del vigía</h2>
-      <p>Punto de partida: presenta la historia y el desafío. <code>barcode 1</code></p>
+      <p>📍 <b>Entrada.</b> Punto de partida y, al final, el cofre: con las tres pistas reunidas se vuelve a escanear este mismo marcador. <code>barcode 1</code></p>
     </div>
   </section>
 
@@ -91,7 +92,7 @@
     <div class="datos">
       <div class="etiqueta">Marcador 2</div>
       <h2>🗝️ La llave de bronce</h2>
-      <p>Primera pista del mensaje. <code>barcode 2</code></p>
+      <p>📍 <b>Cafetería.</b> Primera pista. <code>barcode 2</code></p>
     </div>
   </section>
 
@@ -100,7 +101,7 @@
     <div class="datos">
       <div class="etiqueta">Marcador 3</div>
       <h2>🧭 La brújula inquieta</h2>
-      <p>Segunda pista del mensaje. <code>barcode 3</code></p>
+      <p>📍 <b>Clase más alta del edificio.</b> Segunda pista. <code>barcode 3</code></p>
     </div>
   </section>
 
@@ -109,22 +110,14 @@
     <div class="datos">
       <div class="etiqueta">Marcador 4</div>
       <h2>💎 El cristal verde</h2>
-      <p>Tercera pista del mensaje. <code>barcode 4</code></p>
+      <p>📍 <b>Biblioteca, libros de informática.</b> Tercera pista. <code>barcode 4</code></p>
     </div>
   </section>
 
-  <section class="hoja">
-    <img src="markers/tesoro.svg" alt="Marcador Cofre">
-    <div class="datos">
-      <div class="etiqueta">Marcador 5</div>
-      <h2>🏆 El cofre del vigía</h2>
-      <p>Solo se abre con las 4 señales anteriores. <code>barcode 5</code></p>
-    </div>
-  </section>
 </main>
 
 <footer>
-  Marcadores <b>barcode 3×3_HAMMING63</b> (ids 1 a 5), generados con <code>tools/gen_markers.py</code>.
+  Marcadores <b>barcode 3×3_HAMMING63</b> (ids 1 a 4), generados con <code>tools/gen_markers.py</code>.
   El detector decodifica un código binario con corrección de errores en vez de comparar imágenes,
   así que no hay confusión entre marcadores y la detección es mucho más estable.
 </footer>

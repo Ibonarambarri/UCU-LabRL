@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Genera un video .y4m con los 5 marcadores en secuencia, para alimentar la camara
+Genera un video .y4m con el recorrido completo (entrada, 3 pistas, entrada otra vez), para alimentar la camara
 falsa de Chrome (--use-file-for-fake-video-capture) y probar la deteccion sin
 tener que imprimir nada ni apuntar un telefono.
 
@@ -51,7 +51,8 @@ def main():
     lado = H + 40 if sin_margen else int(arg)
     with open(salida, "wb") as f:
         f.write(b"YUV4MPEG2 W%d H%d F%d:1 Ip A1:1 C420mpeg2\n" % (W, H, FPS))
-        for nombre in ["inicio", "pista1", "pista2", "pista3", "tesoro"]:
+        # el cofre es el marcador de la entrada escaneado de nuevo al final
+        for nombre in ["inicio", "pista1", "pista2", "pista3", "inicio"]:
             m = dibujar(CODIGOS[nombre][1], lado, con_margen=not sin_margen)
             if giro:
                 m = m.rotate(giro, resample=Image.BICUBIC, expand=True, fillcolor=255)

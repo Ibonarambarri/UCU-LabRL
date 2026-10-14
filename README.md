@@ -3,42 +3,49 @@
 Juego web de realidad aumentada basada en marcadores, hecho con **AR.js 3.4.7** + **A-Frame 1.6.0**.
 Funciona en el navegador del celular o de la notebook, sin instalar nada.
 
-**▶️ Jugar:** https://ibonarambarri.github.io/tesoro-sacre-coeur-ar/
+**▶️ Jugar:** https://ibonarambarri.github.io/UCU-LabRL/
 
-**🖨️ Marcadores para imprimir:** https://ibonarambarri.github.io/tesoro-sacre-coeur-ar/marcadores.html
+**🖨️ Marcadores para imprimir:** https://ibonarambarri.github.io/UCU-LabRL/marcadores.html
 
-**🖥️ Marcadores en pantalla (sin impresora):** https://ibonarambarri.github.io/tesoro-sacre-coeur-ar/pantalla.html
+**🖥️ Marcadores en pantalla (sin impresora):** https://ibonarambarri.github.io/UCU-LabRL/pantalla.html
+
+**📄 Carteles en PDF (para pegar en el edificio):** https://ibonarambarri.github.io/UCU-LabRL/marcadores.pdf
 
 ---
 
 ## Cómo se juega
 
-1. Abrís la URL y permitís el acceso a la cámara.
-2. Apuntás a cada marcador y lo mantenés encuadrado ~1 segundo.
-3. Cada marcador revela un elemento 3D distinto y un verso del mensaje del vigía.
-4. Con las **4 primeras señales** reunidas, el **cofre** se desbloquea: al escanearlo se abre,
-   suena la fanfarria, cae confeti y aparece el final con tu tiempo.
+1. Abrís la URL (o escaneás el QR del cartel de la entrada) y permitís la cámara.
+2. Empezás en la **entrada**: el juego lo dice al abrir y el HUD muestra siempre el próximo destino.
+3. Cada marcador revela un elemento 3D y un verso que indica dónde está el siguiente.
+4. Con las **3 pistas** reunidas, volvés a la entrada: el mismo marcador del inicio ahora
+   es el **cofre**. Se abre, suena la fanfarria, cae confeti y aparece el final con tu tiempo.
 
 El progreso se guarda en `localStorage`, así que se puede cerrar y retomar.
 
-## Los 5 marcadores
+## El recorrido: 4 marcadores en el edificio
 
-| # | Marcador | Elemento 3D | Rol |
-|---|----------|-------------|-----|
-| 1 | 📜 El diario del vigía | pergamino + nudo toroidal dorado | historia inicial |
-| 2 | 🗝️ La llave de bronce | llave 3D flotando y girando | pista I |
-| 3 | 🧭 La brújula inquieta | brújula con aguja giratoria | pista II |
-| 4 | 💎 El cristal verde | octaedro translúcido con halo | pista III |
-| 5 | 🏆 El cofre del vigía | cofre cerrado / cofre abierto con joyas | final |
+| # | Lugar | Marcador | Elemento 3D |
+|---|-------|----------|-------------|
+| 1 | Entrada | 📜 El diario del vigía | pergamino + nudo toroidal dorado |
+| 2 | Cafetería | 🗝️ La llave de bronce | llave 3D flotando y girando |
+| 3 | Clase más alta del edificio | 🧭 La brújula inquieta | brújula con aguja giratoria |
+| 4 | Biblioteca, libros de informática | 💎 El cristal verde | octaedro translúcido con halo |
+| — | Entrada, otra vez | 🏆 El cofre del vigía | el marcador 1 pasa a mostrar el cofre |
+
+La broma del final: el tesoro estuvo todo el tiempo en la entrada. El cofre no tiene
+marcador propio; es el de la entrada escaneado de nuevo con las tres pistas reunidas.
 
 ## Estructura
 
 ```
 index.html           juego (escena AR + HUD + lógica)
 marcadores.html      marcadores para imprimir (A4, uno por hoja)
+marcadores.pdf       carteles para pegar: nombre del juego, lugar y QR al juego
 pantalla.html        marcadores a pantalla completa, para mostrar en otro monitor
-markers/*.svg        marcadores imprimibles 100×100 mm
+markers/*.svg        marcadores imprimibles 100×100 mm (+ qr-juego.svg)
 tools/gen_markers.py generador de los marcadores
+tools/gen_pdf.py     genera marcadores.pdf
 ```
 
 ## Marcadores: por qué barcode y no patrones

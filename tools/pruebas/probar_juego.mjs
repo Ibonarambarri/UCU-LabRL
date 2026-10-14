@@ -48,16 +48,16 @@ await send("Runtime.enable");
 
 // saltear la intro
 await send("Runtime.evaluate", { expression: `
-  localStorage.setItem("sacre-coeur-ar-v1", JSON.stringify({hallados:[],inicioTs:null,finTs:null,vistoIntro:true}));
+  localStorage.setItem("sacre-coeur-ar-v2", JSON.stringify({hallados:[],inicioTs:null,finTs:null,vistoIntro:true}));
   location.reload();` });
 await espera(3500);
 
 // espiar la deteccion cruda de ARToolKit y cerrar los paneles como haria el jugador
 await send("Runtime.evaluate", { expression: `
   window.__visible = {};
-  ["inicio","pista1","pista2","pista3","tesoro"].forEach(function(n){ __visible[n] = 0; });
+  ["inicio","pista1","pista2","pista3"].forEach(function(n){ __visible[n] = 0; });
   setInterval(function(){
-    ["inicio","pista1","pista2","pista3","tesoro"].forEach(function(n){
+    ["inicio","pista1","pista2","pista3"].forEach(function(n){
       var el = document.getElementById("mk-"+n);
       if (el && el.object3D && el.object3D.visible) __visible[n] += 50;
     });
@@ -74,7 +74,7 @@ await espera(ESPERA);
 const r = await send("Runtime.evaluate", { expression: `JSON.stringify({
   fichas: [...document.querySelectorAll(".ficha.hallado .nombre")].map(f => f.textContent),
   visible: window.__visible,
-  guardado: JSON.parse(localStorage.getItem("sacre-coeur-ar-v1"))
+  guardado: JSON.parse(localStorage.getItem("sacre-coeur-ar-v2"))
 })`, returnByValue: true });
 
 const d = JSON.parse(r.result.value);

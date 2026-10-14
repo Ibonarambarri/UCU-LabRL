@@ -1,10 +1,12 @@
 # El tesoro del Sacré Coeur — búsqueda del tesoro en AR
 
 Juego web de realidad aumentada con **AR.js 3.4.7 + A-Frame 1.6.0**. Sin build, sin
-dependencias, sin framework: son tres HTML estáticos servidos por GitHub Pages.
+dependencias, sin framework: son tres HTML estáticos (y un PDF) servidos por GitHub Pages.
 
-- **Juego:** https://ibonarambarri.github.io/tesoro-sacre-coeur-ar/
-- **Repo:** https://github.com/Ibonarambarri/tesoro-sacre-coeur-ar
+- **Juego:** https://ibonarambarri.github.io/UCU-LabRL/
+- **Repo:** https://github.com/Ibonarambarri/UCU-LabRL
+  (antes se llamaba `tesoro-sacre-coeur-ar`; al renombrarlo, GitHub **no redirige Pages**
+  y la URL vieja da 404. Si se vuelve a renombrar, regenerar el QR y el PDF.)
 - El **único entregable del laboratorio es la URL**. La nota depende de que tres beta
   testers (Bruno, Maxi, Gonzalo) puedan encontrar el tesoro. Robustez de detección
   antes que cualquier otra cosa.
@@ -14,9 +16,12 @@ dependencias, sin framework: son tres HTML estáticos servidos por GitHub Pages.
 ```
 index.html            juego: escena AR + HUD + lógica
 marcadores.html       marcadores para imprimir (A4, uno por hoja)
+marcadores.pdf        carteles para pegar en el edificio (los genera tools/gen_pdf.py)
 pantalla.html         marcadores a pantalla completa (para mostrar en otro monitor)
-markers/*.svg         los 5 marcadores, 14×14 cm (cuadro negro de 10×10 + zona blanca)
+markers/*.svg         marcadores, 14×14 cm (cuadro negro de 10×10 + zona blanca)
+markers/qr-juego.svg  QR con la URL del juego, para el cartel de la entrada
 tools/gen_markers.py  genera los SVG a partir de las grillas 3×3
+tools/gen_pdf.py      genera marcadores.pdf (imprime HTML a PDF con Chrome)
 tools/pruebas/        banco de pruebas headless (ver más abajo)
 ```
 
@@ -100,14 +105,14 @@ cámara falsa, así que se puede jugar el juego entero de forma automática.
 # 1. servidor estático en la raíz del repo
 python3 -m http.server 8790
 
-# 2. generar un video con los 5 marcadores (lado_px, blur, giro, salida)
+# 2. generar un video con el recorrido: entrada, 3 pistas, entrada (lado_px, blur, giro, salida)
 python3 tools/pruebas/generar_video.py 160 1.0 8 /tmp/ok.y4m
 
 # 3. jugarlo automáticamente (cierra los paneles como haría el jugador)
 node tools/pruebas/probar_juego.mjs /tmp/ok.y4m 18000
 ```
 
-Sale `✅ OK: juego completado` cuando registra los 5 marcadores y abre el cofre; devuelve
+Sale `✅ OK: juego completado` cuando registra las 5 fichas y abre el cofre; devuelve
 código de salida 1 si falla, así que sirve para CI.
 
 Para reproducir el fallo clásico y comprobar que el test discrimina:
@@ -149,9 +154,16 @@ suele ser un `SingletonLock` de un perfil viejo: usar `--user-data-dir` con time
   un archivo que falta es un modo de fallo silencioso más.
 - **A-Frame `<a-text>` no renderiza acentos** con la fuente por defecto. El texto 3D va sin
   tildes («EL DIARIO DEL VIGIA»); los acentos van en el HUD HTML, que sí los soporta.
-- **Progreso en `localStorage`** bajo la clave `sacre-coeur-ar-v1`. El botón ↺ lo borra.
-- **El cofre (`tesoro`, barcode 5) está bloqueado** hasta tener los otros 4: escanearlo
-  antes muestra un panel de "cofre cerrado".
+- **Progreso en `localStorage`** bajo la clave `sacre-coeur-ar-v2` (v1 era del recorrido de
+  5 marcadores; se cambió para no heredar progreso viejo). El botón ↺ lo borra.
+- **Recorrido en cadena, 4 marcadores físicos:** entrada (1) → cafetería (2) → clase más
+  alta (3) → biblioteca, informática (4) → entrada otra vez. Cada verso lleva al siguiente y
+  el HUD muestra siempre el próximo destino (campo `destino`).
+- **El cofre no tiene marcador propio:** es el barcode 1 (entrada) escaneado de nuevo con las
+  tres pistas reunidas (campo `marca: "inicio"`). Antes de eso se ignora. El barcode 5 y
+  `markers/tesoro.svg` ya no se usan.
+- **El QR del cartel no confunde al detector:** probado con las hojas reales del PDF (hoja
+  entera y acercada, QR a la vista), cada hoja registra solo su marcador.
 - **Vigía de cámara:** si a los 12 s no llega imagen, aparece un panel con causas concretas
   en vez de una pantalla negra muda.
 - La cámara **exige HTTPS** (o localhost). El juego avisa si se abrió por HTTP.
@@ -161,7 +173,7 @@ suele ser un `SingletonLock` de un perfil viejo: usar `--user-data-dir` con time
 GitHub Pages desde `main` / raíz, con `.nojekyll`. Después de `git push`:
 
 ```bash
-gh api repos/Ibonarambarri/tesoro-sacre-coeur-ar/pages/builds/latest --jq '.commit+" "+.status'
+gh api repos/Ibonarambarri/UCU-LabRL/pages/builds/latest --jq '.commit+" "+.status'
 ```
 
 Esperar a que el commit del build coincida con `git rev-parse HEAD` **y** el estado sea

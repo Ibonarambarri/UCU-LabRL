@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0b0f1a">
 <title>El Tesoro del Sacré Coeur — Búsqueda AR</title>
+<meta name="description" content="Búsqueda del tesoro en realidad aumentada. Empezá en la entrada del edificio: ahí está el primer marcador.">
+<meta property="og:title" content="El tesoro del Sacré Coeur">
+<meta property="og:description" content="Búsqueda del tesoro en realidad aumentada. Empezá en la entrada del edificio: ahí está el primer marcador.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗝️</text></svg>">
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.7/aframe/build/aframe-ar.js"></script>
@@ -67,6 +70,13 @@
   .ficha.nueva{animation:pop .6s cubic-bezier(.2,1.4,.4,1)}
   @keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.22)}100%{transform:scale(1)}}
   .ficha.bloqueada .glifo{filter:grayscale(1) brightness(.6)}
+
+  /* --- próximo destino --- */
+  .abajo{display:flex;flex-direction:column;align-items:center;gap:8px}
+  #destino{max-width:100%;background:rgba(11,15,26,.88);border:1px solid var(--oro);border-radius:12px;
+    padding:7px 13px;font-size:13.5px;line-height:1.35;color:var(--oro-claro);text-align:center;
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+  #destino b{color:var(--oro)}
 
   /* --- guía de escaneo --- */
   #guia{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:5;
@@ -132,10 +142,12 @@
   <a-entity light="type: ambient; intensity: 0.85"></a-entity>
   <a-entity light="type: directional; intensity: 0.65" position="1 3 2"></a-entity>
 
-  <!-- ══ MARCADOR 1 · EL DIARIO ══ -->
+  <!-- ══ MARCADOR 1 · EL DIARIO (entrada) ══
+       Es también el cofre: con las tres pistas reunidas, volver a escanearlo
+       abre el tesoro. El tesoro estaba en la entrada desde el principio. -->
   <a-marker id="mk-inicio" type="barcode" value="1"
             smooth="true" smoothCount="6" smoothTolerance="0.02" smoothThreshold="2">
-    <a-entity position="0 0 0">
+    <a-entity id="diario" position="0 0 0">
       <a-plane position="0 0.01 0" rotation="-90 0 0" width="1.35" height="0.95"
                color="#f3e3c3" opacity="0.96"
                animation="property: rotation; from: -90 0 -6; to: -90 0 6; dir: alternate; dur: 3400; loop: true; easing: easeInOutSine"></a-plane>
@@ -147,6 +159,29 @@
                 animation="property: rotation; to: 0 360 0; loop: true; dur: 7000; easing: linear">
         <a-torus-knot radius="0.2" radius-tubular="0.035" color="#f0c069" metalness="0.6" roughness="0.3"></a-torus-knot>
       </a-entity>
+    </a-entity>
+    <!-- cofre cerrado -->
+    <a-entity id="cofre-cerrado" visible="false" position="0 0.22 0">
+      <a-box width="0.9" height="0.44" depth="0.6" color="#3b2a16" metalness="0.2" roughness="0.8"></a-box>
+      <a-box width="0.94" height="0.06" depth="0.64" color="#7a6a4a" position="0 0.24 0"></a-box>
+      <a-box width="0.14" height="0.16" depth="0.06" color="#8d8d8d" position="0 0.06 0.32"></a-box>
+      <a-text value="CERRADO" align="center" color="#ff7a6b" width="1.6"
+              position="0 0.55 0" rotation="0 0 0"></a-text>
+    </a-entity>
+    <!-- cofre abierto -->
+    <a-entity id="cofre-abierto" visible="false" position="0 0.22 0">
+      <a-box width="0.9" height="0.44" depth="0.6" color="#4a3419" metalness="0.2" roughness="0.75"></a-box>
+      <a-box width="0.94" height="0.08" depth="0.64" color="#f0c069" metalness="0.8" roughness="0.2"
+             position="0 0.42 -0.3" rotation="-105 0 0"></a-box>
+      <a-sphere radius="0.16" color="#ffe4a8" metalness="0.9" roughness="0.15" position="0 0.3 0"
+                animation="property: position; to: 0 0.46 0; dir: alternate; dur: 1500; loop: true; easing: easeInOutSine"></a-sphere>
+      <a-sphere radius="0.09" color="#f0c069" metalness="0.9" roughness="0.15" position="-0.26 0.26 0.1"></a-sphere>
+      <a-sphere radius="0.07" color="#5fd6a6" metalness="0.6" roughness="0.1" position="0.25 0.25 -0.08"></a-sphere>
+      <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 5000; easing: linear">
+        <a-torus radius="0.55" radius-tubular="0.015" color="#ffe4a8" rotation="90 0 0" position="0 0.35 0"></a-torus>
+      </a-entity>
+      <a-text value="TESORO HALLADO" align="center" color="#ffe4a8" width="2"
+              position="0 0.85 0"></a-text>
     </a-entity>
   </a-marker>
 
@@ -201,33 +236,6 @@
             position="0 0.02 0.62" rotation="-90 0 0"></a-text>
   </a-marker>
 
-  <!-- ══ MARCADOR 5 · EL COFRE ══ -->
-  <a-marker id="mk-tesoro" type="barcode" value="5"
-            smooth="true" smoothCount="6" smoothTolerance="0.02" smoothThreshold="2">
-    <!-- cofre cerrado -->
-    <a-entity id="cofre-cerrado" position="0 0.22 0">
-      <a-box width="0.9" height="0.44" depth="0.6" color="#3b2a16" metalness="0.2" roughness="0.8"></a-box>
-      <a-box width="0.94" height="0.06" depth="0.64" color="#7a6a4a" position="0 0.24 0"></a-box>
-      <a-box width="0.14" height="0.16" depth="0.06" color="#8d8d8d" position="0 0.06 0.32"></a-box>
-      <a-text value="CERRADO" align="center" color="#ff7a6b" width="1.6"
-              position="0 0.55 0" rotation="0 0 0"></a-text>
-    </a-entity>
-    <!-- cofre abierto -->
-    <a-entity id="cofre-abierto" visible="false" position="0 0.22 0">
-      <a-box width="0.9" height="0.44" depth="0.6" color="#4a3419" metalness="0.2" roughness="0.75"></a-box>
-      <a-box width="0.94" height="0.08" depth="0.64" color="#f0c069" metalness="0.8" roughness="0.2"
-             position="0 0.42 -0.3" rotation="-105 0 0"></a-box>
-      <a-sphere radius="0.16" color="#ffe4a8" metalness="0.9" roughness="0.15" position="0 0.3 0"
-                animation="property: position; to: 0 0.46 0; dir: alternate; dur: 1500; loop: true; easing: easeInOutSine"></a-sphere>
-      <a-sphere radius="0.09" color="#f0c069" metalness="0.9" roughness="0.15" position="-0.26 0.26 0.1"></a-sphere>
-      <a-sphere radius="0.07" color="#5fd6a6" metalness="0.6" roughness="0.1" position="0.25 0.25 -0.08"></a-sphere>
-      <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 5000; easing: linear">
-        <a-torus radius="0.55" radius-tubular="0.015" color="#ffe4a8" rotation="90 0 0" position="0 0.35 0"></a-torus>
-      </a-entity>
-      <a-text value="TESORO HALLADO" align="center" color="#ffe4a8" width="2"
-              position="0 0.85 0"></a-text>
-    </a-entity>
-  </a-marker>
 
   <a-entity camera></a-entity>
 </a-scene>
@@ -243,7 +251,10 @@
     <button class="icono-btn ui" id="btn-ayuda" title="Cómo jugar">?</button>
     <button class="icono-btn ui" id="btn-reset" title="Reiniciar partida">↺</button>
   </div>
-  <div id="progreso"></div>
+  <div class="abajo">
+    <div id="destino" class="ui"></div>
+    <div id="progreso"></div>
+  </div>
 </div>
 
 <div id="aviso"></div>
@@ -255,43 +266,52 @@
   "use strict";
 
   /* ══════════ Datos del juego ══════════ */
+  // El recorrido es una cadena: cada marcador da la pista del siguiente.
+  //   entrada → cafetería → clase más alta → biblioteca (informática) → entrada
+  // El cofre no tiene marcador propio: es el de la ENTRADA escaneado otra vez con
+  // las tres pistas reunidas (`marca` dice qué <a-marker> lo dispara).
   var MARCADORES = [
     {
-      id: "inicio", glifo: "📜", nombre: "Diario", orden: 1,
+      id: "inicio", marca: "inicio", glifo: "📜", nombre: "Diario", orden: 1,
+      destino: "la entrada del edificio",
       titulo: "El diario del vigía",
-      encabezado: "Marcador I de V",
-      texto: "Sacré Coeur, 1932. El vigía nocturno escondió algo antes de marcharse y dejó tres señales repartidas por el edificio.",
-      versos: "«Quien reúna la llave, el rumbo y la luz,\nabrirá el cofre que nadie halló.»",
-      nota: "Buscá los tres marcadores de pista. Después aparecerá el cofre."
+      encabezado: "La entrada",
+      texto: "Sacré Coeur, 1932. El vigía nocturno escondió algo antes de marcharse y dejó tres señales repartidas por el edificio. La primera está donde todos recuperan fuerzas.",
+      versos: "«Donde el café despierta a los que madrugan\ny las bandejas van y vienen sin parar.»",
+      nota: "Andá a la <b>cafetería</b> y buscá la primera señal."
     },
     {
-      id: "pista1", glifo: "🗝️", nombre: "Llave", orden: 2,
+      id: "pista1", marca: "pista1", glifo: "🗝️", nombre: "Llave", orden: 2,
+      destino: "la cafetería",
       titulo: "La llave de bronce",
-      encabezado: "Pista I de III",
-      texto: "La primera señal es una llave que gira sobre sí misma, sin puerta que le corresponda.",
-      versos: "«Donde el edificio saluda a quien entra\ny el reloj mira a todos por igual.»",
-      nota: "Guardá el verso: los tres juntos indican dónde se esconde el cofre."
+      encabezado: "Pista I de III · La cafetería",
+      texto: "Una llave que gira sobre sí misma, sin puerta que le corresponda. Abre algo mucho más arriba.",
+      versos: "«Subí hasta donde se acaban las escaleras:\nla clase más alta guarda el rumbo.»",
+      nota: "Subí a la <b>clase más alta del edificio</b>."
     },
     {
-      id: "pista2", glifo: "🧭", nombre: "Brújula", orden: 3,
+      id: "pista2", marca: "pista2", glifo: "🧭", nombre: "Brújula", orden: 3,
+      destino: "la clase más alta del edificio",
       titulo: "La brújula inquieta",
-      encabezado: "Pista II de III",
-      texto: "La aguja no busca el norte: gira sin descanso, como si el rumbo estuviera dentro del edificio.",
-      versos: "«Subí hasta donde el eco repite los pasos\ny la luz llega tarde por la mañana.»",
-      nota: "Dos versos en tu poder. Falta el tercero."
+      encabezado: "Pista II de III · La clase más alta",
+      texto: "La aguja no busca el norte: gira sin descanso y apunta hacia abajo, hacia el silencio y el papel.",
+      versos: "«Entre estantes donde las máquinas aprenden a pensar,\nla luz duerme entre libros de informática.»",
+      nota: "Bajá a la <b>biblioteca</b>, a la sección de <b>libros de informática</b>."
     },
     {
-      id: "pista3", glifo: "💎", nombre: "Cristal", orden: 4,
+      id: "pista3", marca: "pista3", glifo: "💎", nombre: "Cristal", orden: 4,
+      destino: "la biblioteca, sección de informática",
       titulo: "El cristal verde",
-      encabezado: "Pista III de III",
-      texto: "Un cristal que late con luz propia. Es el último fragmento del mensaje del vigía.",
-      versos: "«Detrás de lo que todos miran sin ver,\nallí descansa lo que nadie buscó.»",
-      nota: "Ya tenés el mensaje completo. Encontrá el marcador del cofre."
+      encabezado: "Pista III de III · La biblioteca",
+      texto: "Un cristal que late con luz propia. Dentro, la última línea del mensaje del vigía.",
+      versos: "«El tesoro nunca se movió de su lugar:\nvolvé a donde empezó todo.»",
+      nota: "Volvé a la <b>entrada</b> y escaneá otra vez el primer marcador."
     },
     {
-      id: "tesoro", glifo: "🏆", nombre: "Cofre", orden: 5,
+      id: "tesoro", marca: "inicio", glifo: "🏆", nombre: "Cofre", orden: 5,
+      destino: "la entrada, otra vez",
       titulo: "El cofre del vigía",
-      encabezado: "Marcador V de V",
+      encabezado: "La entrada, otra vez",
       texto: "",
       versos: "",
       nota: ""
@@ -299,7 +319,7 @@
   ];
 
   var PISTAS = ["inicio", "pista1", "pista2", "pista3"];
-  var CLAVE = "sacre-coeur-ar-v1";
+  var CLAVE = "sacre-coeur-ar-v2";
   // AR.js no entrega una deteccion estable: alterna markerFound/markerLost varias
   // veces por segundo. Por eso NO se exige visibilidad continua, sino tiempo visible
   // ACUMULADO, con una gracia que ignora los parpadeos cortos.
@@ -335,6 +355,7 @@
   var $velo = document.getElementById("velo");
   var $carta = document.getElementById("carta");
   var $progreso = document.getElementById("progreso");
+  var $destino = document.getElementById("destino");
   var $aviso = document.getElementById("aviso");
   var $guia = document.getElementById("guia");
   var $crono = document.getElementById("cronometro");
@@ -366,10 +387,6 @@
       tono(n[0], n[1], 0.34, 0.18, "triangle");
     });
   }
-  function sonarBloqueado() {
-    tono(180, 0, 0.22, 0.16, "square");
-    tono(120, 0.14, 0.3, 0.14, "square");
-  }
   function sonarVictoria() {
     var notas = [523.25, 659.25, 783.99, 1046.5, 1318.5];
     notas.forEach(function (f, i) { tono(f, i * 0.14, 0.6, 0.2, "triangle"); });
@@ -391,6 +408,19 @@
                     '<div class="nombre">' + m.nombre + "</div>";
       $progreso.appendChild(d);
     });
+    pintarDestino();
+  }
+
+  // Próximo lugar a visitar: el primero de la cadena que falta. Con solo abrir el
+  // link ya dice adónde ir, aunque el jugador cierre los paneles sin leerlos.
+  function pintarDestino() {
+    if (juegoTerminado()) { $destino.innerHTML = "🏆 <b>Tesoro encontrado</b>"; return; }
+    for (var i = 0; i < MARCADORES.length; i++) {
+      if (!tiene(MARCADORES[i].id)) {
+        $destino.innerHTML = "📍 Siguiente: <b>" + MARCADORES[i].destino + "</b>";
+        return;
+      }
+    }
   }
 
   var avisoTimer = null;
@@ -437,10 +467,11 @@
       "<h1>El tesoro del Sacré Coeur</h1>" +
       "<p>En 1932, el vigía nocturno del edificio escondió algo y repartió tres señales para encontrarlo. " +
       "Nadie las reunió nunca. Hoy te toca a vos.</p>" +
+      '<p class="versos">📍 El primer marcador está en la <b>entrada del edificio</b>.</p>' +
       "<ol>" +
       "<li>Permití el acceso a la <b>cámara</b> cuando el navegador lo pida.</li>" +
       "<li>Apuntá a cada <b>marcador</b> y mantenelo encuadrado un segundo.</li>" +
-      "<li>Reuní las <b>3 pistas</b> para desbloquear el cofre.</li>" +
+      "<li>Empezá por el marcador de la <b>entrada</b>: cada señal te dice dónde está la siguiente.</li>" +
       "</ol>" +
       '<button class="boton" data-cerrar>Comenzar la búsqueda</button>' +
       '<p class="nota">¿No tenés los marcadores? ' +
@@ -449,7 +480,7 @@
       function () {
         estado.vistoIntro = true; guardar();
         audio();
-        avisar("Buscá el primer marcador 🔎", 3200);
+        avisar("Andá a la entrada del edificio 🔎", 3200);
       }
     );
   }
@@ -464,7 +495,7 @@
       "<li>Mantenelo quieto <b>1 segundo</b>: la pista se registra sola.</li>" +
       "<li>El progreso se guarda en este dispositivo; podés cerrar y volver.</li>" +
       "</ol>" +
-      "<p>Reuní el diario y las tres pistas. Recién ahí el cofre se abre.</p>" +
+      "<p>Empezá en la entrada y seguí los versos: cada señal indica dónde está la siguiente. Con las tres pistas reunidas, el cofre se abre.</p>" +
       '<button class="boton" data-cerrar>Volver al juego</button>' +
       '<p class="nota"><a href="marcadores.html" target="_blank" rel="noopener">Imprimir los marcadores</a> · ' +
       '<a href="pantalla.html" target="_blank" rel="noopener">mostrarlos en otra pantalla</a></p>'
@@ -474,7 +505,7 @@
   function cartaPista(m) {
     var restantes = PISTAS.filter(function (id) { return !tiene(id); }).length;
     var pie = restantes === 0
-      ? "<b>Mensaje completo.</b> Encontrá el marcador del cofre."
+      ? "<b>Mensaje completo.</b> Volvé a la entrada."
       : "Te faltan <b>" + restantes + "</b> " + (restantes === 1 ? "señal" : "señales") + ".";
     abrirCarta(
       '<div class="sello">' + m.glifo + "</div>" +
@@ -488,27 +519,16 @@
     );
   }
 
-  function cartaCofreCerrado() {
-    var faltan = PISTAS.filter(function (id) { return !tiene(id); })
-      .map(function (id) { return buscar(id).nombre; });
-    abrirCarta(
-      '<div class="sello">🔒</div>' +
-      "<h1>El cofre está cerrado</h1>" +
-      "<p>Encontraste el cofre del vigía, pero la cerradura no cede: todavía te faltan señales.</p>" +
-      '<p class="versos">Falta: ' + faltan.join(" · ") + "</p>" +
-      '<button class="boton" data-cerrar>Volver a buscar</button>'
-    );
-  }
-
   function cartaFinal() {
     var tiempo = fmt(transcurrido());
     abrirCarta(
       '<div class="sello">🏆</div>' +
       "<h2>Búsqueda completada</h2>" +
       "<h1>¡Encontraste el tesoro!</h1>" +
-      "<p>El cofre del vigía se abre. Dentro no hay oro: hay un plano del Sacré Coeur con cada rincón dibujado a mano, " +
-      "y una nota que dice <i>«el edificio era el tesoro»</i>.</p>" +
-      '<p class="versos">Los 5 marcadores · Tiempo: ' + tiempo + "</p>" +
+      "<p>El cofre estuvo todo el tiempo en la entrada, delante de tus narices. Recorriste la cafetería, " +
+      "subiste hasta la clase más alta y revolviste la biblioteca para volver al mismo lugar donde empezaste.</p>" +
+      "<p>Dentro hay una nota del vigía: <i>«Gracias por el paseo. El tesoro era conocer el edificio.»</i></p>" +
+      '<p class="versos">Las 3 pistas y el cofre · Tiempo: ' + tiempo + "</p>" +
       '<button class="boton" data-cerrar>Contemplar el cofre</button>' +
       '<button class="boton fantasma" id="btn-otra">Jugar de nuevo</button>' +
       '<p class="nota">Laboratorio de Realidad Aumentada · AR.js + A-Frame</p>'
@@ -558,21 +578,20 @@
   var cofreCerrado = document.getElementById("cofre-cerrado");
   var cofreAbierto = document.getElementById("cofre-abierto");
 
+  var diario = document.getElementById("diario");
+
+  // El marcador de la entrada muestra el diario hasta reunir las pistas, después el cofre.
   function pintarCofre() {
-    var abierto = pistasCompletas();
-    if (cofreCerrado) cofreCerrado.setAttribute("visible", !abierto);
+    var listo = pistasCompletas(), abierto = juegoTerminado();
+    if (diario) diario.setAttribute("visible", !listo);
+    if (cofreCerrado) cofreCerrado.setAttribute("visible", listo && !abierto);
     if (cofreAbierto) cofreAbierto.setAttribute("visible", abierto);
   }
 
   function registrar(id) {
     var m = buscar(id);
     if (!m || tiene(id)) return;
-
-    if (id === "tesoro" && !pistasCompletas()) {   // cofre bloqueado
-      sonarBloqueado(); vibrar([40, 60, 40]);
-      cartaCofreCerrado();
-      return;
-    }
+    if (id === "tesoro" && !pistasCompletas()) return;   // el cofre no existe todavía
 
     if (!estado.inicioTs) estado.inicioTs = Date.now();
     estado.hallados.push(id);
@@ -592,7 +611,7 @@
       sonarHallazgo(); vibrar(60);
       cartaPista(m);
       if (pistasCompletas()) {
-        setTimeout(function () { avisar("El cofre ya puede abrirse 🔓", 3600); }, 400);
+        setTimeout(function () { avisar("Volvé a la entrada 🔓", 3600); }, 400);
       }
     }
   }
@@ -600,11 +619,12 @@
   var seguimiento = {};
   MARCADORES.forEach(function (m) {
     seguimiento[m.id] = { acumulado: 0, ultimoVisto: 0, avisado: 0 };
-    var el = document.getElementById("mk-" + m.id);
+    if (m.marca !== m.id) return;   // el cofre comparte marcador con la entrada
+    var el = document.getElementById("mk-" + m.marca);
     if (!el) return;
     el.addEventListener("markerFound", function () {
       if (!tiene(m.id) || $velo.classList.contains("visible")) return;
-      if (m.id === "tesoro" && juegoTerminado()) return;
+      if (m.id === "inicio" && pistasCompletas()) return;   // ahora es el cofre
       var s = seguimiento[m.id], ahora = Date.now();
       if (ahora - s.avisado < 4000) return;
       s.avisado = ahora;
@@ -623,7 +643,8 @@
     for (var i = 0; i < MARCADORES.length; i++) {
       var id = MARCADORES[i].id, s = seguimiento[id];
       if (tiene(id)) continue;
-      if (marcadorVisible(id)) {
+      if (id === "tesoro" && !pistasCompletas()) continue;
+      if (marcadorVisible(MARCADORES[i].marca)) {
         s.ultimoVisto = ahora;
         s.acumulado += PULSO_MS;
         if (s.acumulado >= ESPERA_MS) { s.acumulado = 0; registrar(id); return; }
@@ -663,7 +684,7 @@
   } else if (juegoTerminado()) {
     avisar("Ya encontraste el tesoro · ↺ para jugar de nuevo", 4000);
   } else {
-    avisar("Apuntá la cámara a un marcador 🔎", 3000);
+    avisar("📍 Siguiente: " + MARCADORES.filter(function (m) { return !tiene(m.id); })[0].destino, 3000);
   }
 
   /* ══════════ Vigilancia de la cámara ══════════ */
